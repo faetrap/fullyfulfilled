@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== User & Character =====
+
+model User {
+  id        String    @id // Clerk user ID
+  character Character?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Character {
+  id        String   @id @default(cuid())
+  name      String
+  class     String   @default("Wanderer") // flavor class chosen at onboarding
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stats     Stat[]
+  habits    Habit[]
+  events    Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===== Stats (one per life area) =====
+
+enum LifeArea {
+  HEALTH
+  DISCIPLINE
+  KNOWLEDGE
+  SOCIAL
+  CREATIVITY
+  FINANCE
+}
+
+model Stat {
+  id          String   @id @default(cuid())
+  area        LifeArea
+  label       String   // user-facing name, e.g. "Physical Health"
+  current     Int      @default(100)
+  max         Int      @default(100)
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  habits      Habit[]
+  decays      DecayEvent[]
+  consequence Consequence?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([characterId, area])
+}
+
+// ===== Habits =====
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+}
+
+model Habit {
+  id          String         @id @default(cuid())
+  name        String
+  frequency   HabitFrequency @default(DAILY)
+  xpReward    Int            @default(10)
+  statId      String
+  stat        Stat           @relation(fields: [statId], references: [id], onDelete: Cascade)
+  characterId String
+  character   Character      @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  checkIns    CheckIn[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model CheckIn {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      String   // ISO date string "YYYY-MM-DD"
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+// ===== Decay =====
+
+model DecayEvent {
+  id        String   @id @default(cuid())
+  statId    String
+  stat      Stat     @relation(fields: [statId], references: [id], onDelete: Cascade)
+  amount    Int      // how much the stat dropped
+  streak    Int      @default(0) // consecutive missed days (drives acceleration)
+  date      String   // ISO date string
+  createdAt DateTime @default(now())
+}
+
+// ===== Consequences =====
+
+model Consequence {
+  id          String   @id @default(cuid())
+  statId      String   @unique
+  stat        Stat     @relation(fields: [statId], references: [id], onDelete: Cascade)
+  message     String   // flavor text: "Your body betrays you..."
+  triggeredAt DateTime @default(now())
+  resolvedAt  DateTime?
+}
+
+// ===== Event Log =====
+
+enum EventType {
+  HABIT_COMPLETE
+  HABIT_MISSED
+  DECAY
+  CONSEQUENCE_TRIGGERED
+  CONSEQUENCE_RESOLVED
+  STAT_RECOVERED
+  LEVEL_UP
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  type        EventType
+  message     String
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}

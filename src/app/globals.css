@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-deep: #0a0a0f;
+  --color-bg-panel: #111118;
+  --color-bg-card: #1a1a24;
+  --color-border: #2a2a3a;
+  --color-text: #c8c8d4;
+  --color-text-dim: #6a6a7a;
+  --color-text-bright: #e8e8f0;
+  --color-accent: #8b4513;
+  --color-accent-hover: #a0551a;
+  --color-fear-low: #2d8a4e;
+  --color-fear-mid: #c9a820;
+  --color-fear-high: #c44b28;
+  --color-fear-max: #8b1a1a;
+  --color-xp: #a87fd4;
+  --color-streak: #d4a24f;
+  --color-danger: #c44b28;
+
+  --font-display: "Cinzel", serif;
+  --font-body: "Inter", sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg-deep);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(60, 20, 20, 0.15) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(20, 20, 60, 0.1) 0%,
+      transparent 60%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Stat bar component */
+.stat-bar {
+  height: 10px;
+  background: var(--color-bg-deep);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.6s ease, background 0.6s ease;
+}
+
+/* Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+@keyframes pulse-fear {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 26, 26, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(139, 26, 26, 0.5); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in { animation: fade-in 0.4s ease-out; }
+.animate-shake { animation: shake 0.3s ease-in-out; }
+.animate-pulse-fear { animation: pulse-fear 2s ease-in-out infinite; }
