@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DREAD — Fear RPG Habit Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1 class="title">D R E A D</h1>
+      <p class="subtitle">Complete your tasks. Hold back the darkness.</p>
+    </header>
+
+    <main>
+      <!-- Character Status Panel -->
+      <section id="character-panel">
+        <div id="character-display">
+          <div id="character-art"></div>
+          <h2 id="character-rank">Fearless Hero</h2>
+          <p id="character-flavor">The darkness cannot touch you... yet.</p>
+        </div>
+
+        <div id="fear-meter">
+          <div class="meter-label">
+            <span>FEAR</span>
+            <span id="fear-value">0</span><span>/100</span>
+          </div>
+          <div class="meter-bar">
+            <div id="fear-fill"></div>
+          </div>
+        </div>
+
+        <div id="stats-row">
+          <div class="stat">
+            <span class="stat-label">Streak</span>
+            <span class="stat-value" id="streak-count">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Tasks Done Today</span>
+            <span class="stat-value" id="tasks-done-today">0/0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Total XP</span>
+            <span class="stat-value" id="total-xp">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Habits Panel -->
+      <section id="habits-panel">
+        <div class="panel-header">
+          <h2>Daily Rituals</h2>
+          <button id="add-habit-btn" title="Add new habit">+</button>
+        </div>
+
+        <div id="add-habit-form" class="hidden">
+          <input type="text" id="habit-input" placeholder="Enter a new habit..." maxlength="60">
+          <select id="habit-difficulty">
+            <option value="easy">Easy (5 XP)</option>
+            <option value="medium" selected>Medium (10 XP)</option>
+            <option value="hard">Hard (20 XP)</option>
+          </select>
+          <div class="form-buttons">
+            <button id="save-habit-btn">Add Ritual</button>
+            <button id="cancel-habit-btn">Cancel</button>
+          </div>
+        </div>
+
+        <ul id="habit-list"></ul>
+
+        <p id="empty-state" class="hidden">No rituals yet. Add one to begin your fight against the dark.</p>
+      </section>
+
+      <!-- Event Log -->
+      <section id="log-panel">
+        <h2>Chronicle</h2>
+        <ul id="event-log"></ul>
+      </section>
+    </main>
+
+    <footer>
+      <button id="reset-btn">Abandon Quest (Reset)</button>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
