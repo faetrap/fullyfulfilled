@@ -66,17 +66,18 @@ enum HabitFrequency {
 }
 
 model Habit {
-  id          String         @id @default(cuid())
-  name        String
-  frequency   HabitFrequency @default(DAILY)
-  xpReward    Int            @default(10)
-  statId      String
-  stat        Stat           @relation(fields: [statId], references: [id], onDelete: Cascade)
-  characterId String
-  character   Character      @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  checkIns    CheckIn[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id           String         @id @default(cuid())
+  name         String
+  frequency    HabitFrequency @default(DAILY)
+  xpReward     Int            @default(10)
+  missedStreak Int            @default(0) // consecutive missed days; decay kicks in after 2
+  statId       String
+  stat         Stat           @relation(fields: [statId], references: [id], onDelete: Cascade)
+  characterId  String
+  character    Character      @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  checkIns     CheckIn[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model CheckIn {
