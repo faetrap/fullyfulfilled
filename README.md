@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FullyFulfilled
 
-## Getting Started
+A habit tracker with RPG mechanics. Your life areas are stats. Log habits to maintain them. Miss too many and they decay. Let one hit zero and face a consequence.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** — frontend + API routes
+- **Prisma + PostgreSQL** — data layer
+- **Clerk** — authentication
+- **Tailwind CSS** — styling
+
+## Data Model
+
+- `User` → `Character` → `Stats` (one per life area: Health, Discipline, Knowledge, Social, Creativity, Finance)
+- Each `Stat` is fed by one or more `Habits`
+- Missing habits increments `missedStreak` on the habit → triggers `DecayEvent` on the parent stat after a grace period
+- A stat hitting 0 creates a `Consequence`
+- All notable events are logged to `Event`
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL
+
+### 1. Clone and install
+
+```bash
+git clone git@github.com:faetrap/fullyfulfilled.git
+cd fullyfulfilled
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your values:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/fullyfulfilled?schema=public"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx
+```
+
+Get Clerk keys at [clerk.com](https://clerk.com) → create a new app → API Keys.
+
+### 3. Set up the database
+
+```bash
+npx prisma migrate dev --name init
+```
+
+### 4. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── character/   # character creation + retrieval
+│   │   ├── habits/      # habit management
+│   │   └── checkin/     # daily check-in
+│   ├── layout.tsx
+│   └── page.tsx
+├── lib/
+│   ├── db.ts            # Prisma client singleton
+│   ├── decay.ts         # decay engine logic
+│   └── constants.ts
+└── middleware.ts         # Clerk auth middleware
+prisma/
+└── schema.prisma
+```
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
+| `CLERK_SECRET_KEY` | Clerk secret key |
