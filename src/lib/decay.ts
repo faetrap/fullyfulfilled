@@ -14,12 +14,12 @@ const MAX_DECAY = 25;
 const RECOVERY_PER_CHECKIN = 3;
 
 const CONSEQUENCE_MESSAGES: Record<string, string> = {
-  HEALTH: "Your body betrays you. Every step is agony.",
-  DISCIPLINE: "Chaos reigns. You can't remember what order feels like.",
-  KNOWLEDGE: "The fog thickens. Thoughts slip away like sand.",
-  SOCIAL: "The silence is deafening. No one remembers your name.",
-  CREATIVITY: "The colors have drained from the world. Everything is grey.",
-  FINANCE: "The coffers are empty. Debt collectors circle like vultures.",
+  HEALTH: "Your body grows weary. Rest and movement both feel far away.",
+  DISCIPLINE: "Your routines have scattered. The days blur into one another.",
+  KNOWLEDGE: "Your mind feels foggy. The things you knew seem distant now.",
+  SOCIAL: "The connections you valued have grown quiet. Reach out.",
+  CREATIVITY: "The spark has dimmed. The world feels a little less colorful.",
+  FINANCE: "The ledger has tilted. Small choices add up — time to recalibrate.",
 };
 
 function todayKey(): string {

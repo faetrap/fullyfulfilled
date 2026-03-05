@@ -1,4 +1,4 @@
-import { LifeArea } from "@/generated/prisma";
+import { LifeArea } from "@/generated/prisma/client";
 
 export const LIFE_AREAS: {
   area: LifeArea;
@@ -45,11 +45,10 @@ export const LIFE_AREAS: {
 ];
 
 export const CHARACTER_CLASSES = [
-  { id: "warrior", name: "Warrior", description: "Strength through discipline" },
-  { id: "scholar", name: "Scholar", description: "Knowledge is power" },
-  { id: "monk", name: "Monk", description: "Balance in all things" },
-  { id: "rogue", name: "Rogue", description: "Adapt, improvise, overcome" },
-  { id: "wanderer", name: "Wanderer", description: "The journey is the destination" },
+  { id: "warrior", name: "Warrior", description: "Strength through discipline", icon: "⚔️", color: "#c0392b" },
+  { id: "scholar", name: "Scholar", description: "Knowledge is power",          icon: "📖", color: "#2980b9" },
+  { id: "monk",    name: "Monk",    description: "Balance in all things",       icon: "☯️", color: "#27ae60" },
+  { id: "rogue",   name: "Rogue",   description: "Adapt, improvise, overcome",  icon: "🗡️", color: "#8e44ad" },
 ];
 
 export function todayKey(): string {

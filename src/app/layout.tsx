@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DREAD — Fear RPG Habit Tracker",
-  description: "Complete your tasks. Hold back the darkness.",
+  title: "FullyFulfilled — RPG Habit Tracker",
+  description: "Level up your life. One habit at a time.",
 };
 
 export default function RootLayout({
@@ -14,11 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider appearance={{ baseTheme: dark }}>
+    <ClerkProvider>
       <html lang="en">
         <head>
           <link
-            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;600&family=Press+Start+2P&display=swap"
             rel="stylesheet"
           />
         </head>

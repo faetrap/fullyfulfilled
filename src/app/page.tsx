@@ -9,6 +9,7 @@ type CharacterData = {
   id: string;
   name: string;
   class: string;
+  gender: string;
   stats: StatData[];
   events: EventData[];
 };
@@ -73,7 +74,7 @@ export default function Home() {
           className="text-4xl font-black tracking-[0.6em] text-text-bright"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          D R E A D
+          FULFILLED
         </h1>
         <p className="text-text-dim text-sm tracking-widest animate-pulse">
           Loading...
@@ -90,10 +91,10 @@ export default function Home() {
             className="text-5xl font-black tracking-[0.6em] text-text-bright mb-2"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            D R E A D
+            FULFILLED
           </h1>
           <p className="text-text-dim text-sm tracking-widest">
-            Complete your tasks. Hold back the darkness.
+            Level up your life. One habit at a time.
           </p>
         </div>
 
@@ -103,7 +104,7 @@ export default function Home() {
           </p>
           <SignInButton mode="modal">
             <button className="bg-accent hover:bg-accent-hover text-text-bright font-semibold px-8 py-3 rounded-lg transition-all cursor-pointer">
-              Enter the Darkness
+              Begin Your Journey
             </button>
           </SignInButton>
         </div>
@@ -119,10 +120,10 @@ export default function Home() {
             className="text-3xl font-black tracking-[0.5em] text-text-bright"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            D R E A D
+            FULFILLED
           </h1>
           <p className="text-text-dim text-xs tracking-widest mt-1">
-            Complete your tasks. Hold back the darkness.
+            Level up your life. One habit at a time.
           </p>
         </div>
         <UserButton />

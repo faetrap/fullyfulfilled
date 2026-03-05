@@ -75,15 +75,16 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, characterClass, selectedAreas } = body as {
+  const { name, characterClass, selectedAreas, gender } = body as {
     name: string;
     characterClass: string;
     selectedAreas: string[]; // LifeArea enum values
+    gender: string;
   };
 
-  if (!name || !characterClass || !selectedAreas || selectedAreas.length < 3) {
+  if (!name || !selectedAreas || selectedAreas.length < 3 || !gender) {
     return NextResponse.json(
-      { error: "Name, class, and at least 3 life areas required" },
+      { error: "Name, gender, and at least 3 life areas required" },
       { status: 400 }
     );
   }
@@ -99,12 +100,13 @@ export async function POST(req: NextRequest) {
     data: {
       name,
       class: characterClass,
+      gender,
       userId,
       stats: {
         create: selectedAreas.map((areaKey) => {
           const info = LIFE_AREAS.find((a) => a.area === areaKey);
           return {
-            area: areaKey as keyof typeof import("@/generated/prisma").LifeArea,
+            area: areaKey as keyof typeof import("@/generated/prisma/client").LifeArea,
             label: info?.label || areaKey,
             current: 100,
             max: 100,

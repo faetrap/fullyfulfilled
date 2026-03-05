@@ -1,30 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-deep: #0a0a0f;
-  --color-bg-panel: #111118;
-  --color-bg-card: #1a1a24;
-  --color-border: #2a2a3a;
-  --color-text: #c8c8d4;
-  --color-text-dim: #6a6a7a;
-  --color-text-bright: #e8e8f0;
-  --color-accent: #8b4513;
-  --color-accent-hover: #a0551a;
-  --color-fear-low: #2d8a4e;
-  --color-fear-mid: #c9a820;
-  --color-fear-high: #c44b28;
-  --color-fear-max: #8b1a1a;
-  --color-xp: #a87fd4;
-  --color-streak: #d4a24f;
-  --color-danger: #c44b28;
+  --color-bg-page: #fdf6e3;
+  --color-bg-panel: #fef9f0;
+  --color-bg-card: #fdf0d5;
+  --color-border: #d4b896;
+  --color-border-strong: #b8956a;
+  --color-text: #4a3728;
+  --color-text-dim: #9a7d6b;
+  --color-text-bright: #2c1a0e;
+  --color-accent: #c07a3a;
+  --color-accent-hover: #a86530;
+  --color-tier-1: #3d9e5f;
+  --color-tier-2: #c9a820;
+  --color-tier-3: #e07030;
+  --color-tier-4: #c04040;
+  --color-xp: #7c5cbf;
+  --color-warning: #c07a3a;
+  --color-success: #3d9e5f;
+  --color-danger: #c04040;
 
+  --font-pixel: "Press Start 2P", monospace;
   --font-display: "Cinzel", serif;
   --font-body: "Inter", sans-serif;
 }
 
 body {
   font-family: var(--font-body);
-  background: var(--color-bg-deep);
+  background: var(--color-bg-page);
   color: var(--color-text);
   min-height: 100vh;
 }
@@ -35,12 +38,12 @@ body::before {
   inset: 0;
   background: radial-gradient(
       ellipse at 50% 0%,
-      rgba(60, 20, 20, 0.15) 0%,
+      rgba(192, 122, 58, 0.06) 0%,
       transparent 60%
     ),
     radial-gradient(
       ellipse at 50% 100%,
-      rgba(20, 20, 60, 0.1) 0%,
+      rgba(212, 184, 150, 0.08) 0%,
       transparent 60%
     );
   pointer-events: none;
@@ -50,7 +53,7 @@ body::before {
 /* Stat bar component */
 .stat-bar {
   height: 10px;
-  background: var(--color-bg-deep);
+  background: var(--color-bg-card);
   border-radius: 5px;
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -69,9 +72,9 @@ body::before {
   75% { transform: translateX(3px); }
 }
 
-@keyframes pulse-fear {
-  0%, 100% { box-shadow: 0 0 20px rgba(139, 26, 26, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(139, 26, 26, 0.5); }
+@keyframes pulse-warn {
+  0%, 100% { box-shadow: 0 0 16px rgba(192, 122, 58, 0.15); }
+  50%       { box-shadow: 0 0 32px rgba(192, 122, 58, 0.40); }
 }
 
 @keyframes fade-in {
@@ -81,4 +84,4 @@ body::before {
 
 .animate-fade-in { animation: fade-in 0.4s ease-out; }
 .animate-shake { animation: shake 0.3s ease-in-out; }
-.animate-pulse-fear { animation: pulse-fear 2s ease-in-out infinite; }
+.animate-pulse-warn { animation: pulse-warn 2s ease-in-out infinite; }

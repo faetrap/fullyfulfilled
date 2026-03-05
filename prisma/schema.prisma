@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ===== User & Character =====
@@ -20,7 +19,8 @@ model User {
 model Character {
   id        String   @id @default(cuid())
   name      String
-  class     String   @default("Wanderer") // flavor class chosen at onboarding
+  class     String   @default("Warrior") // flavor class chosen at onboarding
+  gender    String   @default("male")
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stats     Stat[]
