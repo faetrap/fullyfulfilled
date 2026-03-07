@@ -46,7 +46,16 @@ function StatSection({ stat, onRefresh }: { stat: StatData; onRefresh: () => voi
     await fetch("/api/habits", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: habitId, frequency }),
+      body: JSON.stringify({ id: habitId, frequency, weeklyTarget: frequency === "DAILY" ? 7 : 3 }),
+    });
+    onRefresh();
+  }
+
+  async function updateWeeklyTarget(habitId: string, weeklyTarget: number) {
+    await fetch("/api/habits", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: habitId, weeklyTarget }),
     });
     onRefresh();
   }
@@ -128,19 +137,37 @@ function StatSection({ stat, onRefresh }: { stat: StatData; onRefresh: () => voi
               >
                 {habit.name}
               </span>
-              <select
-                value={habit.frequency}
-                onChange={(e) => updateFrequency(habit.id, e.target.value as "DAILY" | "WEEKLY")}
-                className="text-xs rounded px-1 py-0.5 cursor-pointer focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{
-                  background: "var(--color-bg-card)",
-                  border: "1px solid var(--color-border)",
-                  color: "var(--color-text-dim)",
-                }}
-              >
-                <option value="DAILY">Daily</option>
-                <option value="WEEKLY">Weekly</option>
-              </select>
+              <span className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <select
+                  value={habit.frequency}
+                  onChange={(e) => updateFrequency(habit.id, e.target.value as "DAILY" | "WEEKLY")}
+                  className="text-xs rounded px-1 py-0.5 cursor-pointer focus:outline-none"
+                  style={{
+                    background: "var(--color-bg-card)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-dim)",
+                  }}
+                >
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                </select>
+                {habit.frequency === "WEEKLY" && (
+                  <select
+                    value={habit.weeklyTarget}
+                    onChange={(e) => updateWeeklyTarget(habit.id, parseInt(e.target.value))}
+                    className="text-xs rounded px-1 py-0.5 cursor-pointer focus:outline-none"
+                    style={{
+                      background: "var(--color-bg-card)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text-dim)",
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                      <option key={n} value={n}>{n}x/wk</option>
+                    ))}
+                  </select>
+                )}
+              </span>
               <button
                 onClick={() => deleteHabit(habit.id)}
                 className="opacity-0 group-hover:opacity-100 text-xs transition-opacity cursor-pointer text-text-dim hover:text-danger"

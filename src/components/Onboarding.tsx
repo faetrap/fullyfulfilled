@@ -10,6 +10,7 @@ type Props = {
 type HabitDraft = {
   name: string;
   frequency: "DAILY" | "WEEKLY";
+  weeklyTarget: number;
   areaKey: string;
 };
 
@@ -31,7 +32,7 @@ export default function Onboarding({ onComplete }: Props) {
   function addHabitDraft(areaKey: string) {
     const input = newHabitInputs[areaKey]?.trim();
     if (!input) return;
-    setHabitDrafts((prev) => [...prev, { name: input, frequency: "DAILY", areaKey }]);
+    setHabitDrafts((prev) => [...prev, { name: input, frequency: "DAILY", weeklyTarget: 3, areaKey }]);
     setNewHabitInputs((prev) => ({ ...prev, [areaKey]: "" }));
   }
 
@@ -40,7 +41,11 @@ export default function Onboarding({ onComplete }: Props) {
   }
 
   function updateHabitFreq(index: number, freq: "DAILY" | "WEEKLY") {
-    setHabitDrafts((prev) => prev.map((h, i) => i === index ? { ...h, frequency: freq } : h));
+    setHabitDrafts((prev) => prev.map((h, i) => i === index ? { ...h, frequency: freq, weeklyTarget: freq === "DAILY" ? 7 : 3 } : h));
+  }
+
+  function updateWeeklyTarget(index: number, target: number) {
+    setHabitDrafts((prev) => prev.map((h, i) => i === index ? { ...h, weeklyTarget: target } : h));
   }
 
   async function handleSubmit() {
@@ -72,7 +77,7 @@ export default function Onboarding({ onComplete }: Props) {
           await fetch("/api/habits", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: draft.name, statId: stat.id, frequency: draft.frequency }),
+            body: JSON.stringify({ name: draft.name, statId: stat.id, frequency: draft.frequency, weeklyTarget: draft.weeklyTarget }),
           });
         }
       }
@@ -221,8 +226,8 @@ export default function Onboarding({ onComplete }: Props) {
                       {areaHabits.map((habit, idx) => {
                         const globalIdx = habitDrafts.indexOf(habit);
                         return (
-                          <div key={idx} className="flex items-center gap-2 text-sm">
-                            <span className="flex-1 text-text">{habit.name}</span>
+                          <div key={idx} className="flex items-center gap-2 text-sm flex-wrap">
+                            <span className="flex-1 text-text min-w-0">{habit.name}</span>
                             <select
                               value={habit.frequency}
                               onChange={(e) => updateHabitFreq(globalIdx, e.target.value as "DAILY" | "WEEKLY")}
@@ -236,6 +241,22 @@ export default function Onboarding({ onComplete }: Props) {
                               <option value="DAILY">Daily</option>
                               <option value="WEEKLY">Weekly</option>
                             </select>
+                            {habit.frequency === "WEEKLY" && (
+                              <select
+                                value={habit.weeklyTarget}
+                                onChange={(e) => updateWeeklyTarget(globalIdx, parseInt(e.target.value))}
+                                className="text-xs rounded px-1.5 py-0.5 cursor-pointer focus:outline-none"
+                                style={{
+                                  background: "var(--color-bg-card)",
+                                  border: "1px solid var(--color-border)",
+                                  color: "var(--color-text-dim)",
+                                }}
+                              >
+                                {[1, 2, 3, 4, 5, 6].map((n) => (
+                                  <option key={n} value={n}>{n}x/week</option>
+                                ))}
+                              </select>
+                            )}
                             <button
                               onClick={() => removeHabitDraft(globalIdx)}
                               className="text-text-dim hover:text-danger text-xs cursor-pointer"

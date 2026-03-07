@@ -13,10 +13,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, statId, frequency, xpReward } = body as {
+  const { name, statId, frequency, weeklyTarget, xpReward } = body as {
     name: string;
     statId: string;
     frequency?: "DAILY" | "WEEKLY";
+    weeklyTarget?: number;
     xpReward?: number;
   };
 
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
       statId,
       characterId: character.id,
       frequency: frequency || "DAILY",
+      weeklyTarget: weeklyTarget || 7,
       xpReward: xpReward || 10,
     },
   });
@@ -56,10 +58,13 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, frequency } = body as { id: string; frequency: "DAILY" | "WEEKLY" };
+  const { id, frequency, weeklyTarget } = body as { id: string; frequency?: "DAILY" | "WEEKLY"; weeklyTarget?: number };
 
-  if (!id || !frequency || !["DAILY", "WEEKLY"].includes(frequency)) {
-    return NextResponse.json({ error: "Valid id and frequency required" }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: "Habit id required" }, { status: 400 });
+  }
+  if (frequency && !["DAILY", "WEEKLY"].includes(frequency)) {
+    return NextResponse.json({ error: "Invalid frequency" }, { status: 400 });
   }
 
   const habit = await prisma.habit.findFirst({
@@ -69,9 +74,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Habit not found" }, { status: 404 });
   }
 
+  const updateData: Record<string, unknown> = {};
+  if (frequency) updateData.frequency = frequency;
+  if (weeklyTarget !== undefined) updateData.weeklyTarget = weeklyTarget;
+
   const updated = await prisma.habit.update({
     where: { id },
-    data: { frequency },
+    data: updateData,
   });
 
   return NextResponse.json({ habit: updated });

@@ -28,6 +28,7 @@ type HabitData = {
   id: string;
   name: string;
   frequency: string;
+  weeklyTarget: number;
   xpReward: number;
   statId: string;
   checkIns: { id: string; date: string }[];

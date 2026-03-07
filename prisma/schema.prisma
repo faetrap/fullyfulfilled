@@ -69,6 +69,7 @@ model Habit {
   id           String         @id @default(cuid())
   name         String
   frequency    HabitFrequency @default(DAILY)
+  weeklyTarget Int            @default(7) // times per week (only used when frequency=WEEKLY)
   xpReward     Int            @default(10)
   missedStreak Int            @default(0) // consecutive missed days; decay kicks in after 2
   statId       String
