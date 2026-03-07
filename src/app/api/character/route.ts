@@ -9,6 +9,10 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoKey = sevenDaysAgo.toISOString().slice(0, 10);
+
   const character = await prisma.character.findFirst({
     where: { userId },
     include: {
@@ -17,7 +21,7 @@ export async function GET() {
           habits: {
             include: {
               checkIns: {
-                where: { date: new Date().toISOString().slice(0, 10) },
+                where: { date: { gte: sevenDaysAgoKey } },
               },
             },
           },
@@ -47,7 +51,7 @@ export async function GET() {
           habits: {
             include: {
               checkIns: {
-                where: { date: new Date().toISOString().slice(0, 10) },
+                where: { date: { gte: sevenDaysAgoKey } },
               },
             },
           },

@@ -114,25 +114,51 @@ function StatSection({ stat, onRefresh }: { stat: StatData; onRefresh: () => voi
       {/* Habits */}
       <div className="space-y-1.5">
         {stat.habits.map((habit) => {
-          const done = habit.checkIns.length > 0;
+          const checkedToday = habit.checkIns.some((c) => c.date === today);
+          const weekCount = habit.checkIns.length;
+          const isWeekly = habit.frequency === "WEEKLY";
+          const done = checkedToday;
           return (
             <div key={habit.id} className="flex items-center gap-2 group">
-              <button
-                onClick={() => toggleCheckIn(habit.id)}
-                className="w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 text-xs transition-all cursor-pointer"
-                style={{
-                  background: done ? "var(--color-accent)" : "transparent",
-                  borderColor: done ? "var(--color-accent)" : "var(--color-border-strong)",
-                  color: "white",
-                }}
-              >
-                {done ? "\u2713" : ""}
-              </button>
+              {isWeekly ? (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {Array.from({ length: habit.weeklyTarget }).map((_, i) => {
+                    // Clickable: next empty dot (to add) or last filled dot if checked today (to undo)
+                    const isNextEmpty = i === weekCount;
+                    const isLastFilled = checkedToday && i === weekCount - 1;
+                    const clickable = isNextEmpty || isLastFilled;
+                    return (
+                      <button
+                        key={i}
+                        onClick={clickable ? () => toggleCheckIn(habit.id) : undefined}
+                        className="w-3 h-3 rounded-full border transition-all"
+                        style={{
+                          background: i < weekCount ? "var(--color-accent)" : "transparent",
+                          borderColor: i < weekCount ? "var(--color-accent)" : "var(--color-border-strong)",
+                          cursor: clickable ? "pointer" : "default",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <button
+                  onClick={() => toggleCheckIn(habit.id)}
+                  className="w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 text-xs transition-all cursor-pointer"
+                  style={{
+                    background: done ? "var(--color-accent)" : "transparent",
+                    borderColor: done ? "var(--color-accent)" : "var(--color-border-strong)",
+                    color: "white",
+                  }}
+                >
+                  {done ? "\u2713" : ""}
+                </button>
+              )}
               <span
                 className="flex-1 text-sm"
                 style={{
-                  textDecoration: done ? "line-through" : "none",
-                  color: done ? "var(--color-text-dim)" : "var(--color-text)",
+                  textDecoration: !isWeekly && done ? "line-through" : "none",
+                  color: (!isWeekly && done) || (isWeekly && weekCount >= habit.weeklyTarget) ? "var(--color-text-dim)" : "var(--color-text)",
                 }}
               >
                 {habit.name}
