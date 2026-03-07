@@ -69,16 +69,9 @@ export default function Home() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <h1
-          className="text-4xl font-black tracking-[0.6em] text-text-bright"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          FULFILLED
-        </h1>
-        <p className="text-text-dim text-sm tracking-widest animate-pulse">
-          Loading...
-        </p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <h1 className="text-2xl font-bold text-text-bright">Fulfilled</h1>
+        <p className="text-text-dim text-sm animate-pulse">Loading...</p>
       </div>
     );
   }
@@ -86,33 +79,17 @@ export default function Home() {
   if (!isSignedIn) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-8">
-        <div className="text-center space-y-4">
-          <h1
-            className="text-5xl font-black tracking-[0.6em] text-text-bright mb-2"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            FULFILLED
-          </h1>
-          <p className="text-text max-w-sm mx-auto leading-relaxed">
-            Your life is an RPG. Your habits are your stats.
-            Skip them — your character degrades.
-            Keep them — you become who you want to be.
-          </p>
-          <p
-            className="text-lg font-semibold tracking-wide"
-            style={{ color: "var(--color-accent)", fontFamily: "var(--font-display)" }}
-          >
-            Actions have consequences.
+        <div className="text-center space-y-3 max-w-md">
+          <h1 className="text-3xl font-bold text-text-bright">Fulfilled</h1>
+          <p className="text-text-dim leading-relaxed">
+            Track the habits that matter. Build consistency in the areas of life you care about most.
           </p>
         </div>
-
-        <div className="text-center">
-          <SignInButton mode="modal">
-            <button className="bg-accent hover:bg-accent-hover text-text-bright font-semibold px-8 py-3 rounded-lg transition-all cursor-pointer">
-              Begin Your Journey
-            </button>
-          </SignInButton>
-        </div>
+        <SignInButton mode="modal">
+          <button className="bg-accent hover:bg-accent-hover text-white font-medium px-6 py-2.5 rounded-lg transition-colors cursor-pointer">
+            Get Started
+          </button>
+        </SignInButton>
       </div>
     );
   }
@@ -120,17 +97,7 @@ export default function Home() {
   return (
     <>
       <header className="flex justify-between items-center mb-8">
-        <div>
-          <h1
-            className="text-3xl font-black tracking-[0.5em] text-text-bright"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            FULFILLED
-          </h1>
-          <p className="text-text-dim text-xs tracking-widest mt-1">
-            Level up your life. One habit at a time.
-          </p>
-        </div>
+        <h1 className="text-xl font-bold text-text-bright">Fulfilled</h1>
         <UserButton />
       </header>
 

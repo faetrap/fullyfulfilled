@@ -7,17 +7,18 @@ type Props = {
   onComplete: () => void;
 };
 
-const STEP_HEADINGS: Record<number, string> = {
-  1: "Who are you?",
-  2: "What defines you?",
+type HabitDraft = {
+  name: string;
+  frequency: "DAILY" | "WEEKLY";
+  areaKey: string;
 };
 
 export default function Onboarding({ onComplete }: Props) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
-  const [gender, setGender] = useState<"male" | "female">("male");
-  const [startingPoint, setStartingPoint] = useState<"living" | "aspiring">("aspiring");
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [habitDrafts, setHabitDrafts] = useState<HabitDraft[]>([]);
+  const [newHabitInputs, setNewHabitInputs] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,24 +28,55 @@ export default function Onboarding({ onComplete }: Props) {
     );
   }
 
+  function addHabitDraft(areaKey: string) {
+    const input = newHabitInputs[areaKey]?.trim();
+    if (!input) return;
+    setHabitDrafts((prev) => [...prev, { name: input, frequency: "DAILY", areaKey }]);
+    setNewHabitInputs((prev) => ({ ...prev, [areaKey]: "" }));
+  }
+
+  function removeHabitDraft(index: number) {
+    setHabitDrafts((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateHabitFreq(index: number, freq: "DAILY" | "WEEKLY") {
+    setHabitDrafts((prev) => prev.map((h, i) => i === index ? { ...h, frequency: freq } : h));
+  }
+
   async function handleSubmit() {
-    if (selectedAreas.length < 3) {
-      setError("Pick at least 3 life areas.");
+    if (habitDrafts.length === 0) {
+      setError("Add at least one habit to get started.");
       return;
     }
     setSubmitting(true);
     setError("");
     try {
+      // Create character
       const res = await fetch("/api/character", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, characterClass: "none", selectedAreas, gender }),
+        body: JSON.stringify({ name, characterClass: "none", selectedAreas, gender: "neutral" }),
       });
       if (!res.ok) {
         const data = await res.json();
         setError(data.error || "Something went wrong.");
+        setSubmitting(false);
         return;
       }
+      const { character } = await res.json();
+
+      // Create habits
+      for (const draft of habitDrafts) {
+        const stat = character.stats.find((s: { area: string }) => s.area === draft.areaKey);
+        if (stat) {
+          await fetch("/api/habits", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: draft.name, statId: stat.id, frequency: draft.frequency }),
+          });
+        }
+      }
+
       onComplete();
     } catch {
       setError("Something went wrong.");
@@ -53,136 +85,49 @@ export default function Onboarding({ onComplete }: Props) {
     }
   }
 
-  const canContinue = name.trim() && startingPoint;
+  const totalSteps = 3;
+  const selectedAreaObjects = LIFE_AREAS.filter((a) => selectedAreas.includes(a.area));
 
   return (
-    <div className="animate-fade-in max-w-lg mx-auto">
-      {/* Progress dots */}
-      <div className="flex gap-1.5 justify-center mb-8">
-        {[1, 2].map((s) => (
+    <div className="animate-fade-in max-w-md mx-auto">
+      {/* Progress bar */}
+      <div className="flex gap-1.5 mb-8">
+        {[1, 2, 3].map((s) => (
           <div
             key={s}
-            className="h-1.5 rounded-full transition-all"
+            className="h-1 rounded-full flex-1 transition-all"
             style={{
-              width: s <= step ? "2rem" : "1rem",
               background: s <= step ? "var(--color-accent)" : "var(--color-border)",
             }}
           />
         ))}
       </div>
 
-      <div className="text-center mb-8">
-        <h2
-          className="text-2xl font-black tracking-widest mb-2"
-          style={{ fontFamily: "var(--font-display)", color: "var(--color-text-bright)" }}
-        >
-          {STEP_HEADINGS[step]}
-        </h2>
-      </div>
-
-      {/* Step 1: Name + Gender + Starting Point */}
+      {/* Step 1: Name */}
       {step === 1 && (
         <div className="space-y-6">
           <div>
-            <label
-              className="block text-xs tracking-widest uppercase mb-2"
-              style={{ color: "var(--color-text-dim)" }}
-            >
-              Your Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-              className="w-full rounded-xl px-4 py-3 focus:outline-none"
-              style={{
-                background: "var(--color-bg-card)",
-                border: `2px solid var(--color-border)`,
-                color: "var(--color-text-bright)",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "var(--color-accent)")}
-              onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-              maxLength={32}
-            />
+            <h2 className="text-xl font-semibold text-text-bright mb-1">What should we call you?</h2>
+            <p className="text-sm text-text-dim">This is how you'll appear in the app.</p>
           </div>
-
-          <div>
-            <label
-              className="block text-xs tracking-widest uppercase mb-3"
-              style={{ color: "var(--color-text-dim)" }}
-            >
-              Your Character
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {(["male", "female"] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setGender(g)}
-                  className="py-6 rounded-xl border-2 flex flex-col items-center gap-2 transition-all cursor-pointer"
-                  style={{
-                    borderColor: gender === g ? "var(--color-accent)" : "var(--color-border)",
-                    background: gender === g ? "var(--color-bg-card)" : "var(--color-bg-panel)",
-                  }}
-                >
-                  <span className="text-4xl">{g === "male" ? "\u{1F9D1}" : "\u{1F469}"}</span>
-                  <span
-                    className="text-sm font-semibold capitalize"
-                    style={{ color: "var(--color-text-bright)" }}
-                  >
-                    {g}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label
-              className="block text-xs tracking-widest uppercase mb-3"
-              style={{ color: "var(--color-text-dim)" }}
-            >
-              How do you want to start?
-            </label>
-            <div className="space-y-3">
-              {[
-                {
-                  id: "aspiring" as const,
-                  title: "I'm Building My Ideal Self",
-                  subtitle: "Start at 100. Protect what you want to be.",
-                },
-                {
-                  id: "living" as const,
-                  title: "I Already Live Like This",
-                  subtitle: "Start at 100. Defend what you've built.",
-                },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => setStartingPoint(option.id)}
-                  className="w-full text-left px-5 py-4 rounded-xl border-2 transition-all cursor-pointer"
-                  style={{
-                    borderColor:
-                      startingPoint === option.id ? "var(--color-accent)" : "var(--color-border)",
-                    background:
-                      startingPoint === option.id ? "var(--color-bg-card)" : "var(--color-bg-panel)",
-                  }}
-                >
-                  <div className="font-semibold mb-0.5" style={{ color: "var(--color-text-bright)" }}>
-                    {option.title}
-                  </div>
-                  <div className="text-sm" style={{ color: "var(--color-text-dim)" }}>
-                    {option.subtitle}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
+          <input
+            autoFocus
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            className="w-full rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-accent"
+            style={{
+              background: "var(--color-bg-panel)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-bright)",
+            }}
+            maxLength={32}
+          />
           <button
             onClick={() => setStep(2)}
-            disabled={!canContinue}
-            className="w-full font-semibold py-3 rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!name.trim()}
+            className="w-full font-medium py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "var(--color-accent)", color: "white" }}
           >
             Continue
@@ -190,78 +135,166 @@ export default function Onboarding({ onComplete }: Props) {
         </div>
       )}
 
-      {/* Step 2: Life Areas (with How It Works at top) */}
+      {/* Step 2: Life areas */}
       {step === 2 && (
-        <div className="space-y-4">
-          <div
-            className="rounded-xl px-4 py-3 text-sm leading-relaxed"
-            style={{
-              background: "var(--color-bg-card)",
-              border: "2px solid var(--color-border)",
-              color: "var(--color-text)",
-            }}
-          >
-            <span className="font-semibold" style={{ color: "var(--color-text-bright)" }}>
-              How it works:
-            </span>{" "}
-            Each area becomes a stat. Add habits to keep it alive.
-            Miss days and it decays — faster each time. Hit zero and face a consequence.
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-text-bright mb-1">What areas matter to you?</h2>
+            <p className="text-sm text-text-dim">
+              Pick at least 3. Each one becomes a stat you maintain by building habits.
+            </p>
           </div>
 
-          <p className="text-center text-sm" style={{ color: "var(--color-text-dim)" }}>
-            Choose at least 3. These become your stats.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {LIFE_AREAS.map((area) => {
               const selected = selectedAreas.includes(area.area);
               return (
                 <button
                   key={area.area}
                   onClick={() => toggleArea(area.area)}
-                  className="text-left px-4 py-3 rounded-xl border-2 transition-all cursor-pointer"
+                  className="text-left px-4 py-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between"
                   style={{
                     borderColor: selected ? "var(--color-accent)" : "var(--color-border)",
-                    background: selected ? "var(--color-bg-card)" : "var(--color-bg-panel)",
+                    background: selected ? "rgba(37, 99, 235, 0.05)" : "var(--color-bg-panel)",
                   }}
                 >
-                  <div className="font-semibold" style={{ color: "var(--color-text-bright)" }}>
-                    {area.label}
+                  <div>
+                    <div className="font-medium text-text-bright">{area.label}</div>
+                    <div className="text-xs text-text-dim mt-0.5">{area.description}</div>
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: "var(--color-text-dim)" }}>
-                    {area.description}
-                  </div>
+                  {selected && (
+                    <span className="text-accent text-lg flex-shrink-0 ml-3">&#10003;</span>
+                  )}
                 </button>
               );
             })}
           </div>
 
-          <p className="text-center text-xs" style={{ color: "var(--color-text-dim)" }}>
-            {selectedAreas.length} selected
-            {selectedAreas.length < 3 && ` \u2014 need ${3 - selectedAreas.length} more`}
+          <p className="text-center text-xs text-text-dim">
+            {selectedAreas.length} selected{selectedAreas.length < 3 && ` \u2014 need ${3 - selectedAreas.length} more`}
           </p>
 
-          {error && (
-            <p className="text-center text-sm" style={{ color: "var(--color-danger)" }}>
-              {error}
-            </p>
-          )}
-
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3">
             <button
               onClick={() => setStep(1)}
-              className="flex-1 py-3 rounded-xl border-2 transition-all cursor-pointer"
+              className="flex-1 py-2.5 rounded-lg border transition-colors cursor-pointer"
+              style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setStep(3)}
+              disabled={selectedAreas.length < 3}
+              className="flex-[2] font-medium py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "var(--color-accent)", color: "white" }}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Add first habits */}
+      {step === 3 && (
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-text-bright mb-1">Add your first habits</h2>
+            <p className="text-sm text-text-dim">
+              What do you want to stay consistent with? Add at least one habit to get started.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {selectedAreaObjects.map((area) => {
+              const areaHabits = habitDrafts.filter((h) => h.areaKey === area.area);
+              const inputVal = newHabitInputs[area.area] || "";
+              return (
+                <div
+                  key={area.area}
+                  className="rounded-lg border p-4"
+                  style={{ borderColor: "var(--color-border)", background: "var(--color-bg-panel)" }}
+                >
+                  <div className="font-medium text-text-bright text-sm mb-2">{area.label}</div>
+
+                  {areaHabits.length > 0 && (
+                    <div className="space-y-1.5 mb-3">
+                      {areaHabits.map((habit, idx) => {
+                        const globalIdx = habitDrafts.indexOf(habit);
+                        return (
+                          <div key={idx} className="flex items-center gap-2 text-sm">
+                            <span className="flex-1 text-text">{habit.name}</span>
+                            <select
+                              value={habit.frequency}
+                              onChange={(e) => updateHabitFreq(globalIdx, e.target.value as "DAILY" | "WEEKLY")}
+                              className="text-xs rounded px-1.5 py-0.5 cursor-pointer focus:outline-none"
+                              style={{
+                                background: "var(--color-bg-card)",
+                                border: "1px solid var(--color-border)",
+                                color: "var(--color-text-dim)",
+                              }}
+                            >
+                              <option value="DAILY">Daily</option>
+                              <option value="WEEKLY">Weekly</option>
+                            </select>
+                            <button
+                              onClick={() => removeHabitDraft(globalIdx)}
+                              className="text-text-dim hover:text-danger text-xs cursor-pointer"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inputVal}
+                      onChange={(e) => setNewHabitInputs((prev) => ({ ...prev, [area.area]: e.target.value }))}
+                      onKeyDown={(e) => e.key === "Enter" && addHabitDraft(area.area)}
+                      placeholder={`e.g. ${area.area === "HEALTH" ? "Go for a run" : area.area === "KNOWLEDGE" ? "Read 20 pages" : area.area === "SOCIAL" ? "Call a friend" : area.area === "CREATIVITY" ? "Write for 15 min" : area.area === "FINANCE" ? "Review spending" : "Build a habit"}`}
+                      className="flex-1 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                      style={{
+                        background: "var(--color-bg-card)",
+                        border: "1px solid var(--color-border)",
+                        color: "var(--color-text-bright)",
+                      }}
+                    />
+                    <button
+                      onClick={() => addHabitDraft(area.area)}
+                      disabled={!inputVal.trim()}
+                      className="text-sm px-3 py-1.5 rounded font-medium transition-colors cursor-pointer disabled:opacity-30"
+                      style={{ background: "var(--color-accent)", color: "white" }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {error && (
+            <p className="text-center text-sm" style={{ color: "var(--color-danger)" }}>{error}</p>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setStep(2)}
+              className="flex-1 py-2.5 rounded-lg border transition-colors cursor-pointer"
               style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
             >
               Back
             </button>
             <button
               onClick={handleSubmit}
-              disabled={selectedAreas.length < 3 || submitting}
-              className="flex-[2] font-semibold py-3 rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={submitting || habitDrafts.length === 0}
+              className="flex-[2] font-medium py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: "var(--color-accent)", color: "white" }}
             >
-              {submitting ? "Creating..." : "Begin"}
+              {submitting ? "Setting up..." : "Start tracking"}
             </button>
           </div>
         </div>
