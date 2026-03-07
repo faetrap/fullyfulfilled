@@ -224,7 +224,8 @@ function StatSection({ stat, onRefresh }: { stat: StatData; onRefresh: () => voi
       ) : (
         <button
           onClick={() => setShowAdd(true)}
-          className="mt-3 text-xs text-text-dim hover:text-accent transition-colors cursor-pointer"
+          className="mt-3 w-full py-1.5 rounded border border-dashed text-xs text-text-dim hover:text-accent hover:border-accent transition-colors cursor-pointer"
+          style={{ borderColor: "var(--color-border)" }}
         >
           + Add habit
         </button>

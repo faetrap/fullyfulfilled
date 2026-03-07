@@ -31,6 +31,12 @@ export async function POST(req: NextRequest) {
 
   const today = todayKey();
 
+  // Proportional recovery for weekly habits
+  const recoveryAmount =
+    habit.frequency === "WEEKLY"
+      ? Math.max(1, Math.round(RECOVERY_PER_CHECKIN / habit.weeklyTarget))
+      : RECOVERY_PER_CHECKIN;
+
   const existing = await prisma.checkIn.findUnique({
     where: { habitId_date: { habitId, date: today } },
   });
@@ -44,14 +50,14 @@ export async function POST(req: NextRequest) {
       await tx.stat.update({
         where: { id: habit.statId },
         data: {
-          current: { decrement: Math.min(RECOVERY_PER_CHECKIN, habit.stat.current) },
+          current: { decrement: Math.min(recoveryAmount, habit.stat.current) },
         },
       });
 
       await tx.event.create({
         data: {
           type: "HABIT_MISSED",
-          message: `Undid "${habit.name}" (-${RECOVERY_PER_CHECKIN} ${habit.stat.label})`,
+          message: `Undid "${habit.name}" (-${recoveryAmount} ${habit.stat.label})`,
           characterId: character.id,
         },
       });
@@ -66,7 +72,7 @@ export async function POST(req: NextRequest) {
       });
 
       const headroom = habit.stat.max - habit.stat.current;
-      const heal = Math.min(RECOVERY_PER_CHECKIN, headroom);
+      const heal = Math.min(recoveryAmount, headroom);
 
       await tx.stat.update({
         where: { id: habit.statId },

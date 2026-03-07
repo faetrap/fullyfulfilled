@@ -1,5 +1,23 @@
 import { prisma } from "./db";
 
+type HabitWithDecayData = {
+  id: string;
+  name: string;
+  frequency: string;
+  weeklyTarget: number;
+  statId: string;
+  characterId: string;
+  checkIns: { date: string }[];
+  stat: {
+    id: string;
+    current: number;
+    max: number;
+    label: string;
+    area: string;
+    decays: { date: string; streak: number }[];
+  };
+};
+
 /**
  * Decay rules:
  * - 1 day grace period: no decay if only 1 day missed
@@ -12,6 +30,7 @@ import { prisma } from "./db";
 
 const MAX_DECAY = 25;
 const RECOVERY_PER_CHECKIN = 3;
+const WEEKLY_BASE_DECAY = 3;
 
 const CONSEQUENCE_MESSAGES: Record<string, string> = {
   HEALTH: "Your body grows weary. Rest and movement both feel far away.",
@@ -32,6 +51,12 @@ function yesterdayKey(): string {
   return d.toISOString().slice(0, 10);
 }
 
+function sevenDaysAgoKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 7);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Calculate decay amount based on consecutive missed days.
  * Grace period: 1 day (no decay on first miss).
@@ -44,6 +69,76 @@ function decayAmount(consecutiveMissed: number): number {
 }
 
 /**
+ * Weekly habit decay: rolling 7-day window, proportional to miss ratio.
+ * missRatio = max(0, 1 - completedCount / weeklyTarget)
+ * decayAmount = missRatio * WEEKLY_BASE_DECAY (applied daily)
+ */
+async function processWeeklyHabit(
+  habit: HabitWithDecayData,
+  characterId: string,
+  today: string
+) {
+  const completedCount = habit.checkIns.length;
+  const missRatio = Math.max(0, 1 - completedCount / habit.weeklyTarget);
+  const amount = Math.round(missRatio * WEEKLY_BASE_DECAY);
+
+  if (amount <= 0) return;
+
+  const newCurrent = Math.max(0, habit.stat.current - amount);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.stat.update({
+      where: { id: habit.statId },
+      data: { current: newCurrent },
+    });
+
+    await tx.decayEvent.create({
+      data: {
+        statId: habit.statId,
+        amount,
+        streak: 0,
+        date: today,
+      },
+    });
+
+    await tx.event.create({
+      data: {
+        type: "DECAY",
+        message: `${habit.stat.label} decayed by ${amount} (weekly habit "${habit.name}" at ${Math.round((1 - missRatio) * 100)}% of target)`,
+        characterId,
+      },
+    });
+
+    if (newCurrent === 0) {
+      const existing = await tx.consequence.findUnique({
+        where: { statId: habit.statId },
+      });
+
+      if (!existing || existing.resolvedAt) {
+        await tx.consequence.upsert({
+          where: { statId: habit.statId },
+          update: { resolvedAt: null, triggeredAt: new Date() },
+          create: {
+            statId: habit.statId,
+            message:
+              CONSEQUENCE_MESSAGES[habit.stat.area] ||
+              "Something terrible has happened...",
+          },
+        });
+
+        await tx.event.create({
+          data: {
+            type: "CONSEQUENCE_TRIGGERED",
+            message: `CONSEQUENCE: ${habit.stat.label} has reached zero!`,
+            characterId,
+          },
+        });
+      }
+    }
+  });
+}
+
+/**
  * Run decay check for a character. Called on login / page load.
  * Checks each habit — if it wasn't completed yesterday, increment miss streak.
  * Apply decay to the parent stat.
@@ -52,11 +147,13 @@ export async function runDecayForCharacter(characterId: string) {
   const yesterday = yesterdayKey();
   const today = todayKey();
 
+  const sevenDaysAgo = sevenDaysAgoKey();
+
   const habits = await prisma.habit.findMany({
     where: { characterId },
     include: {
       checkIns: {
-        where: { date: yesterday },
+        where: { date: { gte: sevenDaysAgo } },
       },
       stat: {
         include: { decays: { orderBy: { createdAt: "desc" }, take: 1 } },
@@ -65,10 +162,12 @@ export async function runDecayForCharacter(characterId: string) {
   });
 
   for (const habit of habits) {
-    // Only check daily habits for now
-    if (habit.frequency !== "DAILY") continue;
+    if (habit.frequency === "WEEKLY") {
+      await processWeeklyHabit(habit, characterId, today);
+      continue;
+    }
 
-    const completedYesterday = habit.checkIns.length > 0;
+    const completedYesterday = habit.checkIns.some((c) => c.date === yesterday);
 
     if (completedYesterday) {
       // Reset miss streak — stat recovers a little
@@ -155,4 +254,4 @@ export async function runDecayForCharacter(characterId: string) {
   }
 }
 
-export { RECOVERY_PER_CHECKIN };
+export { RECOVERY_PER_CHECKIN, WEEKLY_BASE_DECAY };
