@@ -81,8 +81,12 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-8">
         <div className="text-center space-y-3 max-w-md">
           <h1 className="text-3xl font-bold text-text-bright">Fulfilled</h1>
-          <p className="text-text-dim leading-relaxed">
-            Track the habits that matter. Build consistency in the areas of life you care about most.
+          <p className="text-text leading-relaxed">
+            Your habits shape who you become. Stay consistent and thrive.
+            Fall off — and watch yourself slip.
+          </p>
+          <p className="text-sm font-medium text-text-dim">
+            Actions have consequences.
           </p>
         </div>
         <SignInButton mode="modal">

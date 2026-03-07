@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CharacterData, StatData } from "@/app/page";
 import { todayKey } from "@/lib/constants";
+import { calculateTier, TIER_LABELS, TIER_COLORS, TIER_BG, overallHealthPct } from "@/lib/tiers";
 
 type Props = {
   character: CharacterData;
@@ -214,29 +215,45 @@ export default function Dashboard({ character, onRefresh }: Props) {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Summary */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-text-bright">{character.name}</h2>
-          {totalToday > 0 && (
-            <p className="text-sm text-text-dim">
-              {doneToday === totalToday
-                ? "All done for today"
-                : `${doneToday} of ${totalToday} habits done today`}
-            </p>
-          )}
-        </div>
-        {totalToday > 0 && (
+      {(() => {
+        const tier = calculateTier(character.stats);
+        const healthPct = overallHealthPct(character.stats);
+        const tierColor = TIER_COLORS[tier];
+        return (
           <div
-            className="text-sm font-medium px-3 py-1 rounded-full"
-            style={{
-              background: doneToday === totalToday ? "rgba(22, 163, 74, 0.1)" : "var(--color-bg-card)",
-              color: doneToday === totalToday ? "var(--color-success)" : "var(--color-text-dim)",
-            }}
+            className="rounded-lg border p-4"
+            style={{ borderColor: "var(--color-border)", background: "var(--color-bg-panel)" }}
           >
-            {doneToday}/{totalToday}
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-semibold text-text-bright">{character.name}</h2>
+                {totalToday > 0 && (
+                  <p className="text-sm text-text-dim">
+                    {doneToday === totalToday
+                      ? "All done for today"
+                      : `${doneToday} of ${totalToday} habits done today`}
+                  </p>
+                )}
+              </div>
+              <span
+                className="text-xs font-medium px-2.5 py-1 rounded-full"
+                style={{ background: TIER_BG[tier], color: tierColor }}
+              >
+                {TIER_LABELS[tier]}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="stat-bar flex-1">
+                <div
+                  className="stat-fill"
+                  style={{ width: `${healthPct}%`, background: tierColor }}
+                />
+              </div>
+              <span className="text-xs text-text-dim">{healthPct}%</span>
+            </div>
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Stats */}
       <div className="space-y-3">

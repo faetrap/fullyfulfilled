@@ -10,17 +10,17 @@ export const TIER_LABELS: Record<Tier, string> = {
 };
 
 export const TIER_COLORS: Record<Tier, string> = {
-  1: "var(--color-tier-1)",
-  2: "var(--color-tier-2)",
-  3: "var(--color-tier-3)",
-  4: "var(--color-tier-4)",
+  1: "#16a34a",
+  2: "#d97706",
+  3: "#ea580c",
+  4: "#dc2626",
 };
 
 export const TIER_BG: Record<Tier, string> = {
-  1: "#e8f5ee",
-  2: "#fef9e0",
-  3: "#fef0e0",
-  4: "#fde8e8",
+  1: "rgba(22, 163, 74, 0.08)",
+  2: "rgba(217, 119, 6, 0.08)",
+  3: "rgba(234, 88, 12, 0.08)",
+  4: "rgba(220, 38, 38, 0.08)",
 };
 
 export function calculateTier(stats: StatData[]): Tier {
