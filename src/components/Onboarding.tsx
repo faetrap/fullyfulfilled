@@ -9,8 +9,7 @@ type Props = {
 
 const STEP_HEADINGS: Record<number, string> = {
   1: "Who are you?",
-  2: "Where do you stand?",
-  3: "What defines you?",
+  2: "What defines you?",
 };
 
 export default function Onboarding({ onComplete }: Props) {
@@ -54,11 +53,13 @@ export default function Onboarding({ onComplete }: Props) {
     }
   }
 
+  const canContinue = name.trim() && startingPoint;
+
   return (
     <div className="animate-fade-in max-w-lg mx-auto">
       {/* Progress dots */}
       <div className="flex gap-1.5 justify-center mb-8">
-        {[1, 2, 3].map((s) => (
+        {[1, 2].map((s) => (
           <div
             key={s}
             className="h-1.5 rounded-full transition-all"
@@ -79,7 +80,7 @@ export default function Onboarding({ onComplete }: Props) {
         </h2>
       </div>
 
-      {/* Step 1: Name + Gender */}
+      {/* Step 1: Name + Gender + Starting Point */}
       {step === 1 && (
         <div className="space-y-6">
           <div>
@@ -124,7 +125,7 @@ export default function Onboarding({ onComplete }: Props) {
                     background: gender === g ? "var(--color-bg-card)" : "var(--color-bg-panel)",
                   }}
                 >
-                  <span className="text-4xl">{g === "male" ? "🧑" : "👩"}</span>
+                  <span className="text-4xl">{g === "male" ? "\u{1F9D1}" : "\u{1F469}"}</span>
                   <span
                     className="text-sm font-semibold capitalize"
                     style={{ color: "var(--color-text-bright)" }}
@@ -136,9 +137,51 @@ export default function Onboarding({ onComplete }: Props) {
             </div>
           </div>
 
+          <div>
+            <label
+              className="block text-xs tracking-widest uppercase mb-3"
+              style={{ color: "var(--color-text-dim)" }}
+            >
+              How do you want to start?
+            </label>
+            <div className="space-y-3">
+              {[
+                {
+                  id: "aspiring" as const,
+                  title: "I'm Building My Ideal Self",
+                  subtitle: "Start at 100. Protect what you want to be.",
+                },
+                {
+                  id: "living" as const,
+                  title: "I Already Live Like This",
+                  subtitle: "Start at 100. Defend what you've built.",
+                },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setStartingPoint(option.id)}
+                  className="w-full text-left px-5 py-4 rounded-xl border-2 transition-all cursor-pointer"
+                  style={{
+                    borderColor:
+                      startingPoint === option.id ? "var(--color-accent)" : "var(--color-border)",
+                    background:
+                      startingPoint === option.id ? "var(--color-bg-card)" : "var(--color-bg-panel)",
+                  }}
+                >
+                  <div className="font-semibold mb-0.5" style={{ color: "var(--color-text-bright)" }}>
+                    {option.title}
+                  </div>
+                  <div className="text-sm" style={{ color: "var(--color-text-dim)" }}>
+                    {option.subtitle}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={() => setStep(2)}
-            disabled={!name.trim()}
+            disabled={!canContinue}
             className="w-full font-semibold py-3 rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "var(--color-accent)", color: "white" }}
           >
@@ -147,67 +190,24 @@ export default function Onboarding({ onComplete }: Props) {
         </div>
       )}
 
-      {/* Step 2: Starting Point */}
+      {/* Step 2: Life Areas (with How It Works at top) */}
       {step === 2 && (
         <div className="space-y-4">
-          <p className="text-center text-sm mb-6" style={{ color: "var(--color-text-dim)" }}>
-            This shapes how your journey begins.
-          </p>
-
-          {[
-            {
-              id: "living" as const,
-              title: "I already live like this",
-              subtitle: "You're here to defend what you've built.",
-            },
-            {
-              id: "aspiring" as const,
-              title: "This is who I want to become",
-              subtitle: "Your ideal self is waiting. Let's close the gap.",
-            },
-          ].map((option) => (
-            <button
-              key={option.id}
-              onClick={() => setStartingPoint(option.id)}
-              className="w-full text-left px-5 py-4 rounded-xl border-2 transition-all cursor-pointer"
-              style={{
-                borderColor:
-                  startingPoint === option.id ? "var(--color-accent)" : "var(--color-border)",
-                background:
-                  startingPoint === option.id ? "var(--color-bg-card)" : "var(--color-bg-panel)",
-              }}
-            >
-              <div className="font-semibold mb-0.5" style={{ color: "var(--color-text-bright)" }}>
-                {option.title}
-              </div>
-              <div className="text-sm" style={{ color: "var(--color-text-dim)" }}>
-                {option.subtitle}
-              </div>
-            </button>
-          ))}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setStep(1)}
-              className="flex-1 py-3 rounded-xl border-2 transition-all cursor-pointer"
-              style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
-            >
-              Back
-            </button>
-            <button
-              onClick={() => setStep(3)}
-              className="flex-[2] font-semibold py-3 rounded-xl transition-all cursor-pointer"
-              style={{ background: "var(--color-accent)", color: "white" }}
-            >
-              Continue
-            </button>
+          <div
+            className="rounded-xl px-4 py-3 text-sm leading-relaxed"
+            style={{
+              background: "var(--color-bg-card)",
+              border: "2px solid var(--color-border)",
+              color: "var(--color-text)",
+            }}
+          >
+            <span className="font-semibold" style={{ color: "var(--color-text-bright)" }}>
+              How it works:
+            </span>{" "}
+            Each area becomes a stat. Add habits to keep it alive.
+            Miss days and it decays — faster each time. Hit zero and face a consequence.
           </div>
-        </div>
-      )}
 
-      {/* Step 3: Life Areas */}
-      {step === 3 && (
-        <div className="space-y-4">
           <p className="text-center text-sm" style={{ color: "var(--color-text-dim)" }}>
             Choose at least 3. These become your stats.
           </p>
@@ -238,7 +238,7 @@ export default function Onboarding({ onComplete }: Props) {
 
           <p className="text-center text-xs" style={{ color: "var(--color-text-dim)" }}>
             {selectedAreas.length} selected
-            {selectedAreas.length < 3 && ` — need ${3 - selectedAreas.length} more`}
+            {selectedAreas.length < 3 && ` \u2014 need ${3 - selectedAreas.length} more`}
           </p>
 
           {error && (
@@ -249,7 +249,7 @@ export default function Onboarding({ onComplete }: Props) {
 
           <div className="flex gap-3 pt-2">
             <button
-              onClick={() => setStep(2)}
+              onClick={() => setStep(1)}
               className="flex-1 py-3 rounded-xl border-2 transition-all cursor-pointer"
               style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
             >

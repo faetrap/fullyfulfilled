@@ -86,22 +86,27 @@ export default function Home() {
   if (!isSignedIn) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-8">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <h1
             className="text-5xl font-black tracking-[0.6em] text-text-bright mb-2"
             style={{ fontFamily: "var(--font-display)" }}
           >
             FULFILLED
           </h1>
-          <p className="text-text-dim text-sm tracking-widest">
-            Level up your life. One habit at a time.
+          <p className="text-text max-w-sm mx-auto leading-relaxed">
+            Your life is an RPG. Your habits are your stats.
+            Skip them — your character degrades.
+            Keep them — you become who you want to be.
+          </p>
+          <p
+            className="text-lg font-semibold tracking-wide"
+            style={{ color: "var(--color-accent)", fontFamily: "var(--font-display)" }}
+          >
+            Actions have consequences.
           </p>
         </div>
 
-        <div className="text-center space-y-4">
-          <p className="text-text-dim text-sm">
-            Sign in to begin your journey.
-          </p>
+        <div className="text-center">
           <SignInButton mode="modal">
             <button className="bg-accent hover:bg-accent-hover text-text-bright font-semibold px-8 py-3 rounded-lg transition-all cursor-pointer">
               Begin Your Journey

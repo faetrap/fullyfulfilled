@@ -45,6 +45,38 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ habit }, { status: 201 });
 }
 
+// PATCH /api/habits — update habit frequency
+export async function PATCH(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const character = await prisma.character.findFirst({ where: { userId } });
+  if (!character) {
+    return NextResponse.json({ error: "No character found" }, { status: 404 });
+  }
+
+  const body = await req.json();
+  const { id, frequency } = body as { id: string; frequency: "DAILY" | "WEEKLY" };
+
+  if (!id || !frequency || !["DAILY", "WEEKLY"].includes(frequency)) {
+    return NextResponse.json({ error: "Valid id and frequency required" }, { status: 400 });
+  }
+
+  const habit = await prisma.habit.findFirst({
+    where: { id, characterId: character.id },
+  });
+  if (!habit) {
+    return NextResponse.json({ error: "Habit not found" }, { status: 404 });
+  }
+
+  const updated = await prisma.habit.update({
+    where: { id },
+    data: { frequency },
+  });
+
+  return NextResponse.json({ habit: updated });
+}
+
 // DELETE /api/habits?id=xxx — delete a habit
 export async function DELETE(req: NextRequest) {
   const { userId } = await auth();

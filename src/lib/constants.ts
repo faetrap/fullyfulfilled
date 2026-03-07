@@ -12,13 +12,7 @@ export const LIFE_AREAS: {
     icon: "heart",
     description: "Physical fitness, sleep, nutrition",
   },
-  {
-    area: "DISCIPLINE",
-    label: "Discipline",
-    icon: "shield",
-    description: "Routines, consistency, self-control",
-  },
-  {
+{
     area: "KNOWLEDGE",
     label: "Knowledge",
     icon: "book",
