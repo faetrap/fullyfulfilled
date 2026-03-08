@@ -24,6 +24,15 @@ export async function POST(req: NextRequest) {
   if (!name || !statId) {
     return NextResponse.json({ error: "Name and statId required" }, { status: 400 });
   }
+  if (frequency && !["DAILY", "WEEKLY"].includes(frequency)) {
+    return NextResponse.json({ error: "Invalid frequency" }, { status: 400 });
+  }
+  if (weeklyTarget !== undefined && (weeklyTarget < 1 || weeklyTarget > 7 || !Number.isInteger(weeklyTarget))) {
+    return NextResponse.json({ error: "weeklyTarget must be an integer between 1 and 7" }, { status: 400 });
+  }
+  if (xpReward !== undefined && (xpReward < 1 || xpReward > 1000 || !Number.isInteger(xpReward))) {
+    return NextResponse.json({ error: "xpReward must be an integer between 1 and 1000" }, { status: 400 });
+  }
 
   // Verify stat belongs to this character
   const stat = await prisma.stat.findFirst({
@@ -65,6 +74,9 @@ export async function PATCH(req: NextRequest) {
   }
   if (frequency && !["DAILY", "WEEKLY"].includes(frequency)) {
     return NextResponse.json({ error: "Invalid frequency" }, { status: 400 });
+  }
+  if (weeklyTarget !== undefined && (weeklyTarget < 1 || weeklyTarget > 7 || !Number.isInteger(weeklyTarget))) {
+    return NextResponse.json({ error: "weeklyTarget must be an integer between 1 and 7" }, { status: 400 });
   }
 
   const habit = await prisma.habit.findFirst({

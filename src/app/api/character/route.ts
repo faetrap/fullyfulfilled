@@ -92,6 +92,10 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  const validAreas: string[] = LIFE_AREAS.map((a) => a.area);
+  if (!selectedAreas.every((a) => validAreas.includes(a))) {
+    return NextResponse.json({ error: "Invalid life area" }, { status: 400 });
+  }
 
   // Ensure user record exists
   await prisma.user.upsert({
