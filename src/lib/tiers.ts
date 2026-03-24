@@ -1,4 +1,4 @@
-import { StatData } from "@/app/page";
+import { StatData } from "@/types";
 
 export type Tier = 1 | 2 | 3 | 4;
 

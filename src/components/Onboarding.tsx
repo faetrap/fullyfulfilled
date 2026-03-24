@@ -60,7 +60,7 @@ export default function Onboarding({ onComplete }: Props) {
       const res = await fetch("/api/character", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, characterClass: "none", selectedAreas, gender: "neutral" }),
+        body: JSON.stringify({ name, selectedAreas }),
       });
       if (!res.ok) {
         const data = await res.json();

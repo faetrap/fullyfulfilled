@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CharacterData, StatData } from "@/app/page";
+import { CharacterData, StatData } from "@/types";
 import { todayKey } from "@/lib/constants";
 import { calculateTier, TIER_LABELS, TIER_COLORS, TIER_BG, overallHealthPct } from "@/lib/tiers";
 

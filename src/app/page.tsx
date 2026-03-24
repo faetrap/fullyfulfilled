@@ -4,44 +4,7 @@ import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { useEffect, useState, useCallback } from "react";
 import Onboarding from "@/components/Onboarding";
 import Dashboard from "@/components/Dashboard";
-
-type CharacterData = {
-  id: string;
-  name: string;
-  class: string;
-  gender: string;
-  stats: StatData[];
-  events: EventData[];
-};
-
-type StatData = {
-  id: string;
-  area: string;
-  label: string;
-  current: number;
-  max: number;
-  habits: HabitData[];
-  consequence: { id: string; message: string; resolvedAt: string | null } | null;
-};
-
-type HabitData = {
-  id: string;
-  name: string;
-  frequency: string;
-  weeklyTarget: number;
-  xpReward: number;
-  statId: string;
-  checkIns: { id: string; date: string }[];
-};
-
-type EventData = {
-  id: string;
-  type: string;
-  message: string;
-  createdAt: string;
-};
-
-export type { CharacterData, StatData, HabitData, EventData };
+import type { CharacterData } from "@/types";
 
 export default function Home() {
   const { isSignedIn, isLoaded } = useUser();

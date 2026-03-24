@@ -19,8 +19,6 @@ model User {
 model Character {
   id        String   @id @default(cuid())
   name      String
-  class     String   @default("Warrior") // flavor class chosen at onboarding
-  gender    String   @default("male")
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stats     Stat[]
@@ -34,7 +32,6 @@ model Character {
 
 enum LifeArea {
   HEALTH
-  DISCIPLINE
   KNOWLEDGE
   SOCIAL
   CREATIVITY
@@ -70,8 +67,6 @@ model Habit {
   name         String
   frequency    HabitFrequency @default(DAILY)
   weeklyTarget Int            @default(7) // times per week (only used when frequency=WEEKLY)
-  xpReward     Int            @default(10)
-  missedStreak Int            @default(0) // consecutive missed days; decay kicks in after 2
   statId       String
   stat         Stat           @relation(fields: [statId], references: [id], onDelete: Cascade)
   characterId  String
@@ -123,7 +118,6 @@ enum EventType {
   CONSEQUENCE_TRIGGERED
   CONSEQUENCE_RESOLVED
   STAT_RECOVERED
-  LEVEL_UP
 }
 
 model Event {

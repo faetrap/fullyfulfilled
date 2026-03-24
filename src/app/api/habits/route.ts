@@ -13,12 +13,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, statId, frequency, weeklyTarget, xpReward } = body as {
+  const { name, statId, frequency, weeklyTarget } = body as {
     name: string;
     statId: string;
     frequency?: "DAILY" | "WEEKLY";
     weeklyTarget?: number;
-    xpReward?: number;
   };
 
   if (!name || !statId) {
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest) {
       characterId: character.id,
       frequency: frequency || "DAILY",
       weeklyTarget: weeklyTarget || 7,
-      xpReward: xpReward || 10,
     },
   });
 

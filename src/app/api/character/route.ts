@@ -79,16 +79,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, characterClass, selectedAreas, gender } = body as {
+  const { name, selectedAreas } = body as {
     name: string;
-    characterClass: string;
     selectedAreas: string[]; // LifeArea enum values
-    gender: string;
   };
 
-  if (!name || !selectedAreas || selectedAreas.length < 3 || !gender) {
+  if (!name || !selectedAreas || selectedAreas.length < 3) {
     return NextResponse.json(
-      { error: "Name, gender, and at least 3 life areas required" },
+      { error: "Name and at least 3 life areas required" },
       { status: 400 }
     );
   }
@@ -103,8 +101,6 @@ export async function POST(req: NextRequest) {
   const character = await prisma.character.create({
     data: {
       name,
-      class: characterClass,
-      gender,
       userId,
       stats: {
         create: selectedAreas.map((areaKey) => {
@@ -125,8 +121,8 @@ export async function POST(req: NextRequest) {
 
   await prisma.event.create({
     data: {
-      type: "LEVEL_UP",
-      message: `${name} the ${characterClass} begins their journey.`,
+      type: "STAT_RECOVERED",
+      message: `${name} begins their journey.`,
       characterId: character.id,
     },
   });
