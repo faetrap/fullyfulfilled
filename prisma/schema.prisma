@@ -17,15 +17,19 @@ model User {
 }
 
 model Character {
-  id        String   @id @default(cuid())
-  name      String
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stats     Stat[]
-  habits    Habit[]
-  events    Event[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String    @id @default(cuid())
+  name              String
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vacationMode      Boolean   @default(false)
+  vacationStartedAt DateTime?
+  lastDecayDate     String?
+  stats             Stat[]
+  habits            Habit[]
+  events            Event[]
+  pushSubscriptions PushSubscription[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 // ===== Stats (one per life area) =====
@@ -126,5 +130,17 @@ model Event {
   message     String
   characterId String
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+// ===== Push Notifications =====
+
+model PushSubscription {
+  id          String    @id @default(cuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  endpoint    String    @unique
+  p256dh      String
+  auth        String
   createdAt   DateTime  @default(now())
 }
