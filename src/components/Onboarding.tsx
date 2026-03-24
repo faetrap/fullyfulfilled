@@ -14,6 +14,16 @@ type HabitDraft = {
   areaKey: string;
 };
 
+const SUGGESTED_HABITS: Record<string, string[]> = {
+  HEALTH: ["Exercise 30 minutes", "Drink 8 glasses of water", "Sleep by 11pm"],
+  KNOWLEDGE: ["Read 20 pages", "Practice a skill", "Watch something educational"],
+  SOCIAL: ["Call a friend", "Check in on someone", "Meet someone new"],
+  CREATIVITY: ["Write for 15 minutes", "Draw or sketch", "Work on a project"],
+  FINANCE: ["Review spending", "Save something", "Track expenses"],
+};
+
+const HABIT_SOFT_CAP = 8;
+
 export default function Onboarding({ onComplete }: Props) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -22,11 +32,28 @@ export default function Onboarding({ onComplete }: Props) {
   const [newHabitInputs, setNewHabitInputs] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [slideDir, setSlideDir] = useState<"right" | "left">("right");
+
+  function goForward(nextStep: number) {
+    setSlideDir("right");
+    setStep(nextStep);
+  }
+
+  function goBack(prevStep: number) {
+    setSlideDir("left");
+    setStep(prevStep);
+  }
 
   function toggleArea(area: string) {
     setSelectedAreas((prev) =>
       prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
     );
+  }
+
+  function addSuggested(areaKey: string, habitName: string) {
+    // Don't add if already exists
+    if (habitDrafts.some((h) => h.areaKey === areaKey && h.name === habitName)) return;
+    setHabitDrafts((prev) => [...prev, { name: habitName, frequency: "DAILY", weeklyTarget: 3, areaKey }]);
   }
 
   function addHabitDraft(areaKey: string) {
@@ -56,11 +83,10 @@ export default function Onboarding({ onComplete }: Props) {
     setSubmitting(true);
     setError("");
     try {
-      // Create character
       const res = await fetch("/api/character", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, selectedAreas }),
+        body: JSON.stringify({ name: name.trim() || "You", selectedAreas }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -70,7 +96,6 @@ export default function Onboarding({ onComplete }: Props) {
       }
       const { character } = await res.json();
 
-      // Create habits
       for (const draft of habitDrafts) {
         const stat = character.stats.find((s: { area: string }) => s.area === draft.areaKey);
         if (stat) {
@@ -90,30 +115,31 @@ export default function Onboarding({ onComplete }: Props) {
     }
   }
 
-  const totalSteps = 3;
+  const totalSteps = 4;
   const selectedAreaObjects = LIFE_AREAS.filter((a) => selectedAreas.includes(a.area));
+  const animClass = slideDir === "right" ? "animate-slide-right" : "animate-slide-left";
 
   return (
-    <div className="animate-fade-in max-w-md mx-auto">
+    <div className="max-w-md mx-auto">
       {/* Progress bar */}
       <div className="flex gap-1.5 mb-8">
-        {[1, 2, 3].map((s) => (
+        {Array.from({ length: totalSteps }).map((_, i) => (
           <div
-            key={s}
-            className="h-1 rounded-full flex-1 transition-all"
+            key={i}
+            className="h-1 rounded-full flex-1 transition-all duration-300"
             style={{
-              background: s <= step ? "var(--color-accent)" : "var(--color-border)",
+              background: i + 1 <= step ? "var(--color-accent)" : "var(--color-border)",
             }}
           />
         ))}
       </div>
 
-      {/* Step 1: Name */}
+      {/* Step 1: Name (optional) */}
       {step === 1 && (
-        <div className="space-y-6">
+        <div className={`space-y-6 ${animClass}`} key="step-1">
           <div>
             <h2 className="text-xl font-semibold text-text-bright mb-1">What should we call you?</h2>
-            <p className="text-sm text-text-dim">This is how you'll appear in the app.</p>
+            <p className="text-sm text-text-dim">Optional — you can skip this.</p>
           </div>
           <input
             autoFocus
@@ -128,25 +154,94 @@ export default function Onboarding({ onComplete }: Props) {
               color: "var(--color-text-bright)",
             }}
             maxLength={32}
+            onKeyDown={(e) => e.key === "Enter" && goForward(2)}
           />
-          <button
-            onClick={() => setStep(2)}
-            disabled={!name.trim()}
-            className="w-full font-medium py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "var(--color-accent)", color: "white" }}
-          >
-            Continue
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => goForward(2)}
+              className="flex-1 py-2.5 rounded-lg border transition-colors cursor-pointer text-sm"
+              style={{ borderColor: "var(--color-border)", color: "var(--color-text-dim)" }}
+            >
+              Skip
+            </button>
+            <button
+              onClick={() => goForward(2)}
+              disabled={!name.trim()}
+              className="flex-[2] font-medium py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "var(--color-accent)", color: "white" }}
+            >
+              Continue
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Step 2: Life areas */}
+      {/* Step 2: How it works (decay explainer) */}
       {step === 2 && (
-        <div className="space-y-5">
+        <div className={`space-y-6 ${animClass}`} key="step-2">
+          <div>
+            <h2 className="text-xl font-semibold text-text-bright mb-1">Here's how it works</h2>
+            <p className="text-sm text-text-dim">A quick look at the system.</p>
+          </div>
+
+          <div className="space-y-3">
+            <div
+              className="rounded-lg p-4"
+              style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)" }}
+            >
+              <p className="font-medium text-text-bright text-sm mb-1">Build habits, grow your stats</p>
+              <p className="text-xs text-text-dim leading-relaxed">
+                Every habit you complete heals the stat it belongs to. The more consistent you are, the healthier your stats become.
+              </p>
+            </div>
+
+            <div
+              className="rounded-lg p-4"
+              style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)" }}
+            >
+              <p className="font-medium text-text-bright text-sm mb-1">Miss habits, stats decay</p>
+              <p className="text-xs text-text-dim leading-relaxed">
+                Skip a habit and your stat starts losing health. The longer you skip, the faster it drops. One day off? No big deal — you get a grace period.
+              </p>
+            </div>
+
+            <div
+              className="rounded-lg p-4"
+              style={{ background: "var(--color-bg-panel)", border: "1px solid var(--color-border)" }}
+            >
+              <p className="font-medium text-text-bright text-sm mb-1">Hit zero and face consequences</p>
+              <p className="text-xs text-text-dim leading-relaxed">
+                If a stat drops to zero, a consequence triggers. Recover by getting back on track — your stats heal when you do.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => goBack(1)}
+              className="flex-1 py-2.5 rounded-lg border transition-colors cursor-pointer"
+              style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
+            >
+              Back
+            </button>
+            <button
+              onClick={() => goForward(3)}
+              className="flex-[2] font-medium py-2.5 rounded-lg transition-colors cursor-pointer"
+              style={{ background: "var(--color-accent)", color: "white" }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Life areas */}
+      {step === 3 && (
+        <div className={`space-y-5 ${animClass}`} key="step-3">
           <div>
             <h2 className="text-xl font-semibold text-text-bright mb-1">What areas matter to you?</h2>
             <p className="text-sm text-text-dim">
-              Pick at least 3. Each one becomes a stat you maintain by building habits.
+              Pick at least 3. Each one becomes a stat you maintain.
             </p>
           </div>
 
@@ -168,7 +263,7 @@ export default function Onboarding({ onComplete }: Props) {
                     <div className="text-xs text-text-dim mt-0.5">{area.description}</div>
                   </div>
                   {selected && (
-                    <span className="text-accent text-lg flex-shrink-0 ml-3">&#10003;</span>
+                    <span className="text-accent text-lg flex-shrink-0 ml-3">✓</span>
                   )}
                 </button>
               );
@@ -176,19 +271,19 @@ export default function Onboarding({ onComplete }: Props) {
           </div>
 
           <p className="text-center text-xs text-text-dim">
-            {selectedAreas.length} selected{selectedAreas.length < 3 && ` \u2014 need ${3 - selectedAreas.length} more`}
+            {selectedAreas.length} selected{selectedAreas.length < 3 && ` — need ${3 - selectedAreas.length} more`}
           </p>
 
           <div className="flex gap-3">
             <button
-              onClick={() => setStep(1)}
+              onClick={() => goBack(2)}
               className="flex-1 py-2.5 rounded-lg border transition-colors cursor-pointer"
               style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
             >
               Back
             </button>
             <button
-              onClick={() => setStep(3)}
+              onClick={() => goForward(4)}
               disabled={selectedAreas.length < 3}
               className="flex-[2] font-medium py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: "var(--color-accent)", color: "white" }}
@@ -199,20 +294,35 @@ export default function Onboarding({ onComplete }: Props) {
         </div>
       )}
 
-      {/* Step 3: Add first habits */}
-      {step === 3 && (
-        <div className="space-y-5">
+      {/* Step 4: Add habits */}
+      {step === 4 && (
+        <div className={`space-y-5 ${animClass}`} key="step-4">
           <div>
             <h2 className="text-xl font-semibold text-text-bright mb-1">Add your first habits</h2>
             <p className="text-sm text-text-dim">
-              What do you want to stay consistent with? Add at least one habit to get started.
+              Tap suggestions or type your own. Start small — you can always add more later.
             </p>
           </div>
+
+          {/* Soft cap warning */}
+          {habitDrafts.length >= HABIT_SOFT_CAP && (
+            <div
+              className="rounded-lg px-3 py-2 text-xs animate-scale-in"
+              style={{ background: "rgba(217, 119, 6, 0.08)", color: "var(--color-warning)", border: "1px solid rgba(217, 119, 6, 0.2)" }}
+            >
+              You have {habitDrafts.length} habits. Research shows fewer habits = better consistency. Consider starting with your top priorities.
+            </div>
+          )}
 
           <div className="space-y-4">
             {selectedAreaObjects.map((area) => {
               const areaHabits = habitDrafts.filter((h) => h.areaKey === area.area);
               const inputVal = newHabitInputs[area.area] || "";
+              const suggestions = SUGGESTED_HABITS[area.area] || [];
+              const unusedSuggestions = suggestions.filter(
+                (s) => !areaHabits.some((h) => h.name === s)
+              );
+
               return (
                 <div
                   key={area.area}
@@ -221,12 +331,13 @@ export default function Onboarding({ onComplete }: Props) {
                 >
                   <div className="font-medium text-text-bright text-sm mb-2">{area.label}</div>
 
+                  {/* Added habits */}
                   {areaHabits.length > 0 && (
                     <div className="space-y-1.5 mb-3">
-                      {areaHabits.map((habit, idx) => {
+                      {areaHabits.map((habit) => {
                         const globalIdx = habitDrafts.indexOf(habit);
                         return (
-                          <div key={idx} className="flex items-center gap-2 text-sm flex-wrap">
+                          <div key={globalIdx} className="flex items-center gap-2 text-sm flex-wrap animate-fade-in">
                             <span className="flex-1 text-text min-w-0">{habit.name}</span>
                             <select
                               value={habit.frequency}
@@ -261,7 +372,7 @@ export default function Onboarding({ onComplete }: Props) {
                               onClick={() => removeHabitDraft(globalIdx)}
                               className="text-text-dim hover:text-danger text-xs cursor-pointer"
                             >
-                              &#10005;
+                              ✕
                             </button>
                           </div>
                         );
@@ -269,13 +380,34 @@ export default function Onboarding({ onComplete }: Props) {
                     </div>
                   )}
 
+                  {/* Suggested habits */}
+                  {unusedSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {unusedSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => addSuggested(area.area, suggestion)}
+                          className="text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer hover:border-accent hover:text-accent"
+                          style={{
+                            borderColor: "var(--color-border)",
+                            color: "var(--color-text-dim)",
+                            background: "transparent",
+                          }}
+                        >
+                          + {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Custom input */}
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={inputVal}
                       onChange={(e) => setNewHabitInputs((prev) => ({ ...prev, [area.area]: e.target.value }))}
                       onKeyDown={(e) => e.key === "Enter" && addHabitDraft(area.area)}
-                      placeholder={`e.g. ${area.area === "HEALTH" ? "Go for a run" : area.area === "KNOWLEDGE" ? "Read 20 pages" : area.area === "SOCIAL" ? "Call a friend" : area.area === "CREATIVITY" ? "Write for 15 min" : area.area === "FINANCE" ? "Review spending" : "Build a habit"}`}
+                      placeholder="Or type your own..."
                       className="flex-1 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
                       style={{
                         background: "var(--color-bg-card)",
@@ -303,7 +435,7 @@ export default function Onboarding({ onComplete }: Props) {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setStep(2)}
+              onClick={() => goBack(3)}
               className="flex-1 py-2.5 rounded-lg border transition-colors cursor-pointer"
               style={{ borderColor: "var(--color-border)", color: "var(--color-text)" }}
             >
