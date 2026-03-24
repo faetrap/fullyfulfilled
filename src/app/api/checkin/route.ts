@@ -37,16 +37,16 @@ export async function POST(req: NextRequest) {
       ? Math.max(1, Math.round(RECOVERY_PER_CHECKIN / habit.weeklyTarget))
       : RECOVERY_PER_CHECKIN;
 
-  const existing = await prisma.checkIn.findUnique({
-    where: { habitId_date: { habitId, date: today } },
-  });
+  // Wrap entire toggle in a transaction to prevent race conditions
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.checkIn.findUnique({
+      where: { habitId_date: { habitId, date: today } },
+    });
 
-  if (existing) {
-    // Undo check-in
-    await prisma.$transaction(async (tx) => {
+    if (existing) {
+      // Undo check-in
       await tx.checkIn.delete({ where: { id: existing.id } });
 
-      // Reverse the stat recovery
       await tx.stat.update({
         where: { id: habit.statId },
         data: {
@@ -61,15 +61,21 @@ export async function POST(req: NextRequest) {
           characterId: character.id,
         },
       });
-    });
 
-    return NextResponse.json({ checked: false });
-  } else {
-    // Check in
-    await prisma.$transaction(async (tx) => {
-      await tx.checkIn.create({
-        data: { habitId, date: today },
-      });
+      return { checked: false };
+    } else {
+      // Check in — handle unique constraint violation (double-click)
+      try {
+        await tx.checkIn.create({
+          data: { habitId, date: today },
+        });
+      } catch (e: unknown) {
+        // Unique constraint violation — treat as no-op
+        if (e instanceof Error && e.message.includes("Unique constraint")) {
+          return { checked: true };
+        }
+        throw e;
+      }
 
       const headroom = habit.stat.max - habit.stat.current;
       const heal = Math.min(recoveryAmount, headroom);
@@ -102,8 +108,10 @@ export async function POST(req: NextRequest) {
           },
         });
       }
-    });
 
-    return NextResponse.json({ checked: true });
-  }
+      return { checked: true };
+    }
+  });
+
+  return NextResponse.json(result);
 }

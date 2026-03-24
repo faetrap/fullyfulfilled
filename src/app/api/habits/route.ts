@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
+import { HABIT_CAP } from "@/lib/constants";
 
 // POST /api/habits — create a new habit
 export async function POST(req: NextRequest) {
@@ -22,6 +23,17 @@ export async function POST(req: NextRequest) {
 
   if (!name || !statId) {
     return NextResponse.json({ error: "Name and statId required" }, { status: 400 });
+  }
+
+  // Habit cap validation
+  const habitCount = await prisma.habit.count({
+    where: { characterId: character.id },
+  });
+  if (habitCount >= HABIT_CAP) {
+    return NextResponse.json(
+      { error: `Maximum of ${HABIT_CAP} habits reached. Remove a habit before adding a new one.` },
+      { status: 400 }
+    );
   }
 
   // Verify stat belongs to this character
