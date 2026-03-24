@@ -1,6 +1,8 @@
 export type CharacterData = {
   id: string;
   name: string;
+  vacationMode: boolean;
+  lastDecayDate: string | null;
   stats: StatData[];
   events: EventData[];
 };

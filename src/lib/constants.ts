@@ -1,5 +1,8 @@
 import { LifeArea } from "@/generated/prisma/client";
 
+export const HABIT_CAP = 12;
+export const HABIT_SOFT_CAP = 8;
+
 export const LIFE_AREAS: {
   area: LifeArea;
   label: string;
@@ -12,7 +15,7 @@ export const LIFE_AREAS: {
     icon: "heart",
     description: "Physical fitness, sleep, nutrition",
   },
-{
+  {
     area: "KNOWLEDGE",
     label: "Knowledge",
     icon: "book",
@@ -38,6 +41,13 @@ export const LIFE_AREAS: {
   },
 ];
 
+export const SUGGESTED_HABITS: Record<string, string[]> = {
+  HEALTH: ["Exercise 30 minutes", "Drink 8 glasses of water", "Sleep by 11pm"],
+  KNOWLEDGE: ["Read 20 pages", "Practice a skill", "Watch an educational video"],
+  SOCIAL: ["Call a friend", "Check in on someone", "Meet someone new"],
+  CREATIVITY: ["Write for 15 minutes", "Draw or sketch", "Work on a project"],
+  FINANCE: ["Review spending", "Save something", "Track expenses"],
+};
 
 export function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
