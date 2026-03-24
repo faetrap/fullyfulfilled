@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { LIFE_AREAS } from "@/lib/constants";
-import { runDecayForCharacter } from "@/lib/decay";
 
 // GET /api/character — get current user's character + stats + habits
 export async function GET() {
@@ -39,33 +38,7 @@ export async function GET() {
     return NextResponse.json({ character: null });
   }
 
-  // Run decay on page load
-  await runDecayForCharacter(character.id);
-
-  // Re-fetch after decay
-  const updated = await prisma.character.findUnique({
-    where: { id: character.id },
-    include: {
-      stats: {
-        include: {
-          habits: {
-            include: {
-              checkIns: {
-                where: { date: { gte: sevenDaysAgoKey } },
-              },
-            },
-          },
-          consequence: true,
-        },
-      },
-      events: {
-        orderBy: { createdAt: "desc" },
-        take: 30,
-      },
-    },
-  });
-
-  return NextResponse.json({ character: updated });
+  return NextResponse.json({ character });
 }
 
 // POST /api/character — create character during onboarding

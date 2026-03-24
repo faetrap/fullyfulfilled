@@ -147,6 +147,17 @@ export async function runDecayForCharacter(characterId: string) {
   const yesterday = yesterdayKey();
   const today = todayKey();
 
+  // Check vacation mode — skip decay entirely
+  const character = await prisma.character.findUnique({
+    where: { id: characterId },
+    select: { vacationMode: true, lastDecayDate: true },
+  });
+  if (!character) return;
+  if (character.vacationMode) return;
+
+  // Idempotency — skip if already ran today
+  if (character.lastDecayDate === today) return;
+
   const sevenDaysAgo = sevenDaysAgoKey();
 
   const habits = await prisma.habit.findMany({
@@ -252,6 +263,12 @@ export async function runDecayForCharacter(characterId: string) {
       });
     }
   }
+
+  // Mark today as decayed
+  await prisma.character.update({
+    where: { id: characterId },
+    data: { lastDecayDate: today },
+  });
 }
 
 export { RECOVERY_PER_CHECKIN, WEEKLY_BASE_DECAY };
