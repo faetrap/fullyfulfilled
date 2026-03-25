@@ -47,4 +47,140 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes celebrate-bg {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes celebrate-text {
+  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+  20% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
 .animate-fade-in { animation: fade-in 0.3s ease-out; }
+.animate-slide-right { animation: slide-in-right 0.3s ease-out; }
+.animate-slide-left { animation: slide-in-left 0.3s ease-out; }
+.animate-scale-in { animation: scale-in 0.2s ease-out; }
+.animate-check-pop { animation: check-pop 0.2s ease-out; }
+.animate-pulse-soft { animation: pulse-soft 1.5s ease-in-out infinite; }
+
+/* Bottom tab bar */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-panel);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: center;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab-bar-inner {
+  display: flex;
+  width: 100%;
+  max-width: 640px;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  background: none;
+  border: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-item.active {
+  color: var(--color-accent);
+}
+
+.tab-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Celebration overlay */
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: celebrate-bg 4s ease-out forwards;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.celebration-text {
+  animation: celebrate-text 4s ease-out forwards;
+  text-align: center;
+  padding: 0 2rem;
+}
+
+.confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+  z-index: 101;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .stat-section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Safe area for bottom tabs */
+.has-tab-bar {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+}
