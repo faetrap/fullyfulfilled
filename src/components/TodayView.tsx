@@ -24,29 +24,29 @@ function HabitItem({
   const weekCount = habit.checkIns.length;
   const isWeekly = habit.frequency === "WEEKLY";
   const weeklyComplete = isWeekly && weekCount >= habit.weeklyTarget;
+  // Weekly: allow toggle if not yet complete, or if checked today (to undo)
+  const canTap = !isWeekly || !weeklyComplete || checkedToday;
 
   return (
     <button
-      onClick={() => {
-        if (isWeekly && weeklyComplete && !checkedToday) return;
-        onToggle(habit.id);
-      }}
+      onClick={() => canTap && onToggle(habit.id)}
       className="flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-lg transition-all active:scale-[0.98]"
       style={{
-        background: checkedToday || weeklyComplete ? "rgba(22, 163, 74, 0.04)" : "transparent",
+        background: checkedToday ? "rgba(22, 163, 74, 0.06)" : "transparent",
+        opacity: !canTap ? 0.5 : 1,
       }}
       aria-checked={checkedToday}
       role="checkbox"
     >
       {isWeekly ? (
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {Array.from({ length: habit.weeklyTarget }).map((_, i) => (
             <div
               key={i}
-              className="w-2.5 h-2.5 rounded-full transition-all"
+              className={`w-3 h-3 rounded-full transition-all ${i === weekCount - 1 && checkedToday ? "animate-check-pop" : ""}`}
               style={{
                 background: i < weekCount ? "var(--color-accent)" : "transparent",
-                border: `1.5px solid ${i < weekCount ? "var(--color-accent)" : "var(--color-border-strong)"}`,
+                border: `2px solid ${i < weekCount ? "var(--color-accent)" : "var(--color-border-strong)"}`,
               }}
             />
           ))}
@@ -70,7 +70,7 @@ function HabitItem({
       <span
         className="flex-1 text-sm font-medium"
         style={{
-          textDecoration: !isWeekly && checkedToday ? "line-through" : "none",
+          textDecoration: checkedToday ? "line-through" : "none",
           color: checkedToday || weeklyComplete ? "var(--color-text-dim)" : "var(--color-text-bright)",
         }}
       >
@@ -78,8 +78,11 @@ function HabitItem({
       </span>
 
       {isWeekly && (
-        <span className="text-xs text-text-dim flex-shrink-0">
-          {weekCount}/{habit.weeklyTarget}
+        <span
+          className="text-xs flex-shrink-0 font-medium"
+          style={{ color: weeklyComplete ? "var(--color-success)" : "var(--color-text-dim)" }}
+        >
+          {weekCount}/{habit.weeklyTarget}{weeklyComplete ? " ✓" : ""}
         </span>
       )}
     </button>
