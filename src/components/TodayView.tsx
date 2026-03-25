@@ -11,7 +11,55 @@ type Props = {
   onAllDone: () => void;
 };
 
-function HabitItem({
+function DailyHabitItem({
+  habit,
+  today,
+  onToggle,
+}: {
+  habit: StatData["habits"][number];
+  today: string;
+  onToggle: (habitId: string) => void;
+}) {
+  const checkedToday = habit.checkIns.some((c) => c.date === today);
+
+  return (
+    <button
+      onClick={() => onToggle(habit.id)}
+      className="flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-lg transition-all active:scale-[0.98]"
+      style={{
+        background: checkedToday ? "rgba(22, 163, 74, 0.06)" : "transparent",
+      }}
+      aria-checked={checkedToday}
+      role="checkbox"
+    >
+      <div
+        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${checkedToday ? "animate-check-pop" : ""}`}
+        style={{
+          background: checkedToday ? "var(--color-success)" : "transparent",
+          borderColor: checkedToday ? "var(--color-success)" : "var(--color-border-strong)",
+        }}
+      >
+        {checkedToday && (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </div>
+
+      <span
+        className="flex-1 text-sm font-medium"
+        style={{
+          textDecoration: checkedToday ? "line-through" : "none",
+          color: checkedToday ? "var(--color-text-dim)" : "var(--color-text-bright)",
+        }}
+      >
+        {habit.name}
+      </span>
+    </button>
+  );
+}
+
+function WeeklyHabitItem({
   habit,
   today,
   onToggle,
@@ -22,69 +70,49 @@ function HabitItem({
 }) {
   const checkedToday = habit.checkIns.some((c) => c.date === today);
   const weekCount = habit.checkIns.length;
-  const isWeekly = habit.frequency === "WEEKLY";
-  const weeklyComplete = isWeekly && weekCount >= habit.weeklyTarget;
-  // Weekly: allow toggle if not yet complete, or if checked today (to undo)
-  const canTap = !isWeekly || !weeklyComplete || checkedToday;
+  const weeklyComplete = weekCount >= habit.weeklyTarget;
+  const canTap = !weeklyComplete || checkedToday;
 
   return (
     <button
       onClick={() => canTap && onToggle(habit.id)}
       className="flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-lg transition-all active:scale-[0.98]"
       style={{
-        background: checkedToday ? "rgba(22, 163, 74, 0.06)" : "transparent",
+        background: checkedToday ? "rgba(37, 99, 235, 0.06)" : "transparent",
         opacity: !canTap ? 0.5 : 1,
       }}
       aria-checked={checkedToday}
       role="checkbox"
     >
-      {isWeekly ? (
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {Array.from({ length: habit.weeklyTarget }).map((_, i) => (
-            <div
-              key={i}
-              className={`w-3 h-3 rounded-full transition-all ${i === weekCount - 1 && checkedToday ? "animate-check-pop" : ""}`}
-              style={{
-                background: i < weekCount ? "var(--color-accent)" : "transparent",
-                border: `2px solid ${i < weekCount ? "var(--color-accent)" : "var(--color-border-strong)"}`,
-              }}
-            />
-          ))}
-        </div>
-      ) : (
-        <div
-          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${checkedToday ? "animate-check-pop" : ""}`}
-          style={{
-            background: checkedToday ? "var(--color-success)" : "transparent",
-            borderColor: checkedToday ? "var(--color-success)" : "var(--color-border-strong)",
-          }}
-        >
-          {checkedToday && (
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-      )}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {Array.from({ length: habit.weeklyTarget }).map((_, i) => (
+          <div
+            key={i}
+            className={`w-3 h-3 rounded-full transition-all ${i === weekCount - 1 && checkedToday ? "animate-check-pop" : ""}`}
+            style={{
+              background: i < weekCount ? "var(--color-accent)" : "transparent",
+              border: `2px solid ${i < weekCount ? "var(--color-accent)" : "var(--color-border-strong)"}`,
+            }}
+          />
+        ))}
+      </div>
 
       <span
         className="flex-1 text-sm font-medium"
         style={{
-          textDecoration: checkedToday ? "line-through" : "none",
-          color: checkedToday || weeklyComplete ? "var(--color-text-dim)" : "var(--color-text-bright)",
+          textDecoration: weeklyComplete ? "line-through" : "none",
+          color: weeklyComplete ? "var(--color-text-dim)" : "var(--color-text-bright)",
         }}
       >
         {habit.name}
       </span>
 
-      {isWeekly && (
-        <span
-          className="text-xs flex-shrink-0 font-medium"
-          style={{ color: weeklyComplete ? "var(--color-success)" : "var(--color-text-dim)" }}
-        >
-          {weekCount}/{habit.weeklyTarget}{weeklyComplete ? " ✓" : ""}
-        </span>
-      )}
+      <span
+        className="text-xs flex-shrink-0 font-medium"
+        style={{ color: weeklyComplete ? "var(--color-success)" : checkedToday ? "var(--color-accent)" : "var(--color-text-dim)" }}
+      >
+        {weekCount}/{habit.weeklyTarget}{weeklyComplete ? " ✓" : checkedToday ? " +1" : ""}
+      </span>
     </button>
   );
 }
@@ -103,6 +131,8 @@ function AreaSection({
   const [adding, setAdding] = useState(false);
 
   const pct = Math.round((stat.current / stat.max) * 100);
+  const dailyHabits = stat.habits.filter((h) => h.frequency === "DAILY");
+  const weeklyHabits = stat.habits.filter((h) => h.frequency === "WEEKLY");
   const completedToday = stat.habits.filter((h) => h.checkIns.some((c) => c.date === today)).length;
   const allDone = stat.habits.length > 0 && completedToday === stat.habits.length;
 
@@ -145,12 +175,26 @@ function AreaSection({
         />
       </div>
 
-      {/* Habits */}
-      <div className="space-y-0.5">
-        {stat.habits.map((habit) => (
-          <HabitItem key={habit.id} habit={habit} today={today} onToggle={onToggle} />
-        ))}
-      </div>
+      {/* Daily habits */}
+      {dailyHabits.length > 0 && (
+        <div className="space-y-0.5">
+          {dailyHabits.map((habit) => (
+            <DailyHabitItem key={habit.id} habit={habit} today={today} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
+
+      {/* Weekly habits */}
+      {weeklyHabits.length > 0 && (
+        <div className="space-y-0.5 mt-1">
+          {dailyHabits.length > 0 && (
+            <p className="text-[10px] uppercase tracking-wider text-text-dim px-3 pt-1">Weekly</p>
+          )}
+          {weeklyHabits.map((habit) => (
+            <WeeklyHabitItem key={habit.id} habit={habit} today={today} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
 
       {/* Add habit inline */}
       {showAdd ? (
@@ -216,7 +260,6 @@ export default function TodayView({ character, onRefresh, onAllDone }: Props) {
 
     // Check if all done after this toggle (optimistic: if we were 1 away)
     if (doneToday === totalToday - 1) {
-      // Small delay to let state update
       setTimeout(() => onAllDone(), 300);
     }
   }
