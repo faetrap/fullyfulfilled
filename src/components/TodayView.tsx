@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CharacterData, StatData } from "@/types";
-import { todayKey } from "@/lib/constants";
+import { todayKey, LIFE_AREAS } from "@/lib/constants";
 import { overallHealthPct } from "@/lib/tiers";
+
+// Fixed area order — matches LIFE_AREAS constant
+const AREA_ORDER = LIFE_AREAS.map((a) => a.area);
 
 type Props = {
   character: CharacterData;
@@ -11,35 +14,44 @@ type Props = {
   onAllDone: () => void;
 };
 
+type PendingUndo = {
+  habitId: string;
+  habitName: string;
+  timer: ReturnType<typeof setTimeout>;
+};
+
 function DailyHabitItem({
   habit,
   today,
-  onToggle,
+  onCheck,
+  isPending,
 }: {
   habit: StatData["habits"][number];
   today: string;
-  onToggle: (habitId: string) => void;
+  onCheck: (habitId: string, habitName: string) => void;
+  isPending: boolean;
 }) {
   const checkedToday = habit.checkIns.some((c) => c.date === today);
+  const showChecked = checkedToday || isPending;
 
   return (
     <button
-      onClick={() => onToggle(habit.id)}
+      onClick={() => !showChecked && onCheck(habit.id, habit.name)}
       className="flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-lg transition-all active:scale-[0.98]"
       style={{
-        background: checkedToday ? "rgba(22, 163, 74, 0.06)" : "transparent",
+        background: showChecked ? "rgba(22, 163, 74, 0.06)" : "transparent",
       }}
-      aria-checked={checkedToday}
+      aria-checked={showChecked}
       role="checkbox"
     >
       <div
-        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${checkedToday ? "animate-check-pop" : ""}`}
+        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${isPending ? "animate-check-pop" : ""}`}
         style={{
-          background: checkedToday ? "var(--color-success)" : "transparent",
-          borderColor: checkedToday ? "var(--color-success)" : "var(--color-border-strong)",
+          background: showChecked ? "var(--color-success)" : "transparent",
+          borderColor: showChecked ? "var(--color-success)" : "var(--color-border-strong)",
         }}
       >
-        {checkedToday && (
+        {showChecked && (
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -49,8 +61,8 @@ function DailyHabitItem({
       <span
         className="flex-1 text-sm font-medium"
         style={{
-          textDecoration: checkedToday ? "line-through" : "none",
-          color: checkedToday ? "var(--color-text-dim)" : "var(--color-text-bright)",
+          textDecoration: showChecked ? "line-through" : "none",
+          color: showChecked ? "var(--color-text-dim)" : "var(--color-text-bright)",
         }}
       >
         {habit.name}
@@ -62,33 +74,36 @@ function DailyHabitItem({
 function WeeklyHabitItem({
   habit,
   today,
-  onToggle,
+  onCheck,
+  isPending,
 }: {
   habit: StatData["habits"][number];
   today: string;
-  onToggle: (habitId: string) => void;
+  onCheck: (habitId: string, habitName: string) => void;
+  isPending: boolean;
 }) {
   const checkedToday = habit.checkIns.some((c) => c.date === today);
-  const weekCount = habit.checkIns.length;
+  const weekCount = habit.checkIns.length + (isPending ? 1 : 0);
   const weeklyComplete = weekCount >= habit.weeklyTarget;
-  const canTap = !weeklyComplete || checkedToday;
+  const showChecked = checkedToday || isPending;
+  const canTap = !showChecked && !weeklyComplete;
 
   return (
     <button
-      onClick={() => canTap && onToggle(habit.id)}
+      onClick={() => canTap && onCheck(habit.id, habit.name)}
       className="flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-lg transition-all active:scale-[0.98]"
       style={{
-        background: checkedToday ? "rgba(37, 99, 235, 0.06)" : "transparent",
-        opacity: !canTap ? 0.5 : 1,
+        background: showChecked ? "rgba(37, 99, 235, 0.06)" : "transparent",
+        opacity: !canTap && !showChecked ? 0.5 : 1,
       }}
-      aria-checked={checkedToday}
+      aria-checked={showChecked}
       role="checkbox"
     >
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {Array.from({ length: habit.weeklyTarget }).map((_, i) => (
           <div
             key={i}
-            className={`w-3 h-3 rounded-full transition-all ${i === weekCount - 1 && checkedToday ? "animate-check-pop" : ""}`}
+            className={`w-3 h-3 rounded-full transition-all ${i === weekCount - 1 && isPending ? "animate-check-pop" : ""}`}
             style={{
               background: i < weekCount ? "var(--color-accent)" : "transparent",
               border: `2px solid ${i < weekCount ? "var(--color-accent)" : "var(--color-border-strong)"}`,
@@ -109,9 +124,9 @@ function WeeklyHabitItem({
 
       <span
         className="text-xs flex-shrink-0 font-medium"
-        style={{ color: weeklyComplete ? "var(--color-success)" : checkedToday ? "var(--color-accent)" : "var(--color-text-dim)" }}
+        style={{ color: weeklyComplete ? "var(--color-success)" : showChecked ? "var(--color-accent)" : "var(--color-text-dim)" }}
       >
-        {weekCount}/{habit.weeklyTarget}{weeklyComplete ? " ✓" : checkedToday ? " +1" : ""}
+        {weekCount}/{habit.weeklyTarget}{weeklyComplete ? " ✓" : ""}
       </span>
     </button>
   );
@@ -120,11 +135,13 @@ function WeeklyHabitItem({
 function AreaSection({
   stat,
   today,
-  onToggle,
+  onCheck,
+  pendingIds,
 }: {
   stat: StatData;
   today: string;
-  onToggle: (habitId: string) => void;
+  onCheck: (habitId: string, habitName: string) => void;
+  pendingIds: Set<string>;
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [habitName, setHabitName] = useState("");
@@ -133,7 +150,9 @@ function AreaSection({
   const pct = Math.round((stat.current / stat.max) * 100);
   const dailyHabits = stat.habits.filter((h) => h.frequency === "DAILY");
   const weeklyHabits = stat.habits.filter((h) => h.frequency === "WEEKLY");
-  const completedToday = stat.habits.filter((h) => h.checkIns.some((c) => c.date === today)).length;
+  const completedToday = stat.habits.filter((h) =>
+    h.checkIns.some((c) => c.date === today) || pendingIds.has(h.id)
+  ).length;
   const allDone = stat.habits.length > 0 && completedToday === stat.habits.length;
 
   async function addHabit() {
@@ -147,11 +166,11 @@ function AreaSection({
     setHabitName("");
     setShowAdd(false);
     setAdding(false);
-    onToggle("__refresh__");
+    onCheck("__refresh__", "");
   }
 
   return (
-    <div className="animate-fade-in">
+    <div>
       {/* Area header */}
       <div className="flex items-center justify-between mb-1 px-1">
         <div className="flex items-center gap-2">
@@ -179,7 +198,13 @@ function AreaSection({
       {dailyHabits.length > 0 && (
         <div className="space-y-0.5">
           {dailyHabits.map((habit) => (
-            <DailyHabitItem key={habit.id} habit={habit} today={today} onToggle={onToggle} />
+            <DailyHabitItem
+              key={habit.id}
+              habit={habit}
+              today={today}
+              onCheck={onCheck}
+              isPending={pendingIds.has(habit.id)}
+            />
           ))}
         </div>
       )}
@@ -191,7 +216,13 @@ function AreaSection({
             <p className="text-[10px] uppercase tracking-wider text-text-dim px-3 pt-1">Weekly</p>
           )}
           {weeklyHabits.map((habit) => (
-            <WeeklyHabitItem key={habit.id} habit={habit} today={today} onToggle={onToggle} />
+            <WeeklyHabitItem
+              key={habit.id}
+              habit={habit}
+              today={today}
+              onCheck={onCheck}
+              isPending={pendingIds.has(habit.id)}
+            />
           ))}
         </div>
       )}
@@ -237,35 +268,130 @@ function AreaSection({
   );
 }
 
+// Undo toast bar
+function UndoBar({
+  habitName,
+  onUndo,
+  timeLeft,
+}: {
+  habitName: string;
+  onUndo: () => void;
+  timeLeft: number;
+}) {
+  return (
+    <div
+      className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-xl px-4 py-2.5 shadow-lg animate-fade-in"
+      style={{
+        background: "var(--color-text-bright)",
+        color: "white",
+        minWidth: "260px",
+        maxWidth: "90vw",
+      }}
+    >
+      <span className="flex-1 text-sm">
+        Checked in <strong>{habitName}</strong>
+      </span>
+      <button
+        onClick={onUndo}
+        className="text-sm font-semibold px-2 py-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer"
+        style={{ color: "var(--color-accent)" }}
+      >
+        Undo
+      </button>
+      {/* Timer bar */}
+      <div
+        className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full"
+        style={{
+          background: "var(--color-accent)",
+          transform: `scaleX(${timeLeft / 3000})`,
+          transformOrigin: "left",
+          transition: "transform 0.1s linear",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function TodayView({ character, onRefresh, onAllDone }: Props) {
   const today = todayKey();
-  const allHabits = character.stats.flatMap((s) => s.habits);
+
+  // Sort stats by fixed LIFE_AREAS order
+  const sortedStats = [...character.stats].sort((a, b) => {
+    const aIdx = AREA_ORDER.indexOf(a.area as typeof AREA_ORDER[number]);
+    const bIdx = AREA_ORDER.indexOf(b.area as typeof AREA_ORDER[number]);
+    return aIdx - bIdx;
+  });
+
+  const allHabits = sortedStats.flatMap((s) => s.habits);
   const totalToday = allHabits.length;
-  const doneToday = allHabits.filter((h) => h.checkIns.some((c) => c.date === today)).length;
-  const healthPct = overallHealthPct(character.stats);
+
+  // Pending check-ins (optimistic, before API confirms)
+  const [pending, setPending] = useState<PendingUndo | null>(null);
+  const pendingIds = new Set(pending ? [pending.habitId] : []);
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+
+  // Time left for undo bar animation
+  const [timeLeft, setTimeLeft] = useState(3000);
+
+  useEffect(() => {
+    if (!pending) return;
+    setTimeLeft(3000);
+    const interval = setInterval(() => {
+      setTimeLeft((t) => Math.max(0, t - 100));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [pending]);
+
+  const doneToday = allHabits.filter((h) =>
+    h.checkIns.some((c) => c.date === today) || pendingIds.has(h.id)
+  ).length;
+  const healthPct = overallHealthPct(sortedStats);
   const allComplete = totalToday > 0 && doneToday === totalToday;
 
-  async function handleToggle(habitId: string) {
-    if (habitId === "__refresh__") {
-      onRefresh();
-      return;
-    }
-
+  const commitCheckIn = useCallback(async (habitId: string) => {
     await fetch("/api/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
     });
     onRefresh();
+  }, [onRefresh]);
 
-    // Check if all done after this toggle (optimistic: if we were 1 away)
-    if (doneToday === totalToday - 1) {
-      setTimeout(() => onAllDone(), 300);
+  function handleCheck(habitId: string, habitName: string) {
+    if (habitId === "__refresh__") {
+      onRefresh();
+      return;
     }
+
+    // Cancel any existing pending undo — commit it immediately
+    if (pendingRef.current) {
+      clearTimeout(pendingRef.current.timer);
+      commitCheckIn(pendingRef.current.habitId);
+    }
+
+    // Set new pending with 3-second timer
+    const timer = setTimeout(() => {
+      setPending(null);
+      commitCheckIn(habitId);
+      // Check all done
+      if (doneToday === totalToday - 1) {
+        setTimeout(() => onAllDone(), 300);
+      }
+    }, 3000);
+
+    setPending({ habitId, habitName, timer });
+  }
+
+  function handleUndo() {
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    setPending(null);
+    // Don't call API — nothing was committed
   }
 
   return (
-    <div className="animate-fade-in space-y-5">
+    <div className="space-y-5">
       {/* Day summary */}
       <div className="text-center py-2">
         <p className="text-2xl font-bold text-text-bright">
@@ -291,12 +417,18 @@ export default function TodayView({ character, onRefresh, onAllDone }: Props) {
         </div>
       </div>
 
-      {/* Habit sections by area */}
+      {/* Habit sections by area — fixed order */}
       <div className="space-y-4">
-        {character.stats
+        {sortedStats
           .filter((s) => s.habits.length > 0)
           .map((stat) => (
-            <AreaSection key={stat.id} stat={stat} today={today} onToggle={handleToggle} />
+            <AreaSection
+              key={stat.id}
+              stat={stat}
+              today={today}
+              onCheck={handleCheck}
+              pendingIds={pendingIds}
+            />
           ))}
       </div>
 
@@ -305,6 +437,15 @@ export default function TodayView({ character, onRefresh, onAllDone }: Props) {
         <div className="text-center py-12">
           <p className="text-text-dim text-sm">No habits yet. Add one to get started.</p>
         </div>
+      )}
+
+      {/* Undo bar */}
+      {pending && (
+        <UndoBar
+          habitName={pending.habitName}
+          onUndo={handleUndo}
+          timeLeft={timeLeft}
+        />
       )}
     </div>
   );
